@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from importlib.resources import files
 from pathlib import Path
 
-from sensors.config import AppConfig, SensorConfig
+from sensors.config import AppConfig, BusConfig, SensorConfig
 from sensors.drivers.base import SensorDriver
 from sensors.model import Sample, StoredSensor
 
@@ -50,7 +50,7 @@ class Database:
         for sensor in config.sensors:
             if not sensor.enabled:
                 continue
-            fingerprint = _fingerprint(sensor)
+            fingerprint = _fingerprint(sensor, config.buses[sensor.bus])
             row = connection.execute(
                 """
                 SELECT id FROM sensor_instance
@@ -138,10 +138,14 @@ class Database:
         return self._connection
 
 
-def _fingerprint(sensor: SensorConfig) -> str:
+def _fingerprint(sensor: SensorConfig, bus: BusConfig) -> str:
     payload = {
         "address": sensor.address,
-        "bus": sensor.bus,
+        "bus": {
+            "id": sensor.bus,
+            "type": bus.type,
+            "values": dict(bus.values),
+        },
         "driver": sensor.driver,
         "location": sensor.location,
         "options": dict(sensor.options),

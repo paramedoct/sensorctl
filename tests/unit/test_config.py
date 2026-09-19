@@ -71,3 +71,10 @@ location = "other"
         )
         with self.assertRaisesRegex(ConfigError, "does not support"):
             DriverRegistry().validate(self.load(invalid))
+
+    def test_rejects_shutdown_timeout_above_service_limit(self) -> None:
+        invalid = VALID_CONFIG.replace(
+            "version = 1", "version = 1\n\n[collector]\nshutdown_timeout_s = 11"
+        )
+        with self.assertRaisesRegex(ConfigError, "between 1 and 10"):
+            self.load(invalid)

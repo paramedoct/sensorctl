@@ -109,6 +109,7 @@ class Collector:
                     if periods > 1:
                         stats.missed(sensor.id, periods - 1)
                     if not stats.can_run(sensor.id, now):
+                        stats.missed(sensor.id, 1)
                         continue
                     if stats.dispatch(sensor.id):
                         bus_tasks[sensor.bus].put_nowait(ReadTask(sensor))

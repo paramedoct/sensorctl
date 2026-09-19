@@ -54,15 +54,17 @@ class RuntimeStats:
         with self._lock:
             return now_ns >= self._sensors[sensor_id].backoff_until_ns
 
-    def success(self, sensor_id: str, wall_time_ns: int) -> None:
+    def success(self, sensor_id: str, wall_time_ns: int) -> bool:
         with self._lock:
             status = self._sensors[sensor_id]
+            recovered = status.consecutive_failures > 0
             status.pending = False
             status.successful_reads += 1
             status.consecutive_failures = 0
             status.backoff_until_ns = 0
             status.last_read_ns = wall_time_ns
             status.last_error = None
+            return recovered
 
     def failure(self, sensor_id: str, error: Exception, now_ns: int) -> None:
         with self._lock:
@@ -151,12 +153,14 @@ class BusWorker(threading.Thread):
                     if sensor.id not in initialized:
                         driver.initialize(self._transport)
                         initialized.add(sensor.id)
-                    wall_time_ns = time.time_ns()
-                    monotonic_ns = time.monotonic_ns()
+                    wall_time_ns = 0
+                    monotonic_ns = 0
                     values: dict[str, float] | None = None
                     last_error: Exception | None = None
                     for _ in range(self._retries + 1):
                         try:
+                            wall_time_ns = time.time_ns()
+                            monotonic_ns = time.monotonic_ns()
                             values = dict(driver.read(self._transport))
                             break
                         except Exception as error:
@@ -180,7 +184,8 @@ class BusWorker(threading.Thread):
                         self._results.put_nowait(sample)
                     except queue.Full:
                         self._stats.dropped(sensor.id)
-                    self._stats.success(sensor.id, wall_time_ns)
+                    if self._stats.success(sensor.id, wall_time_ns):
+                        LOGGER.info("sensor %s recovered", sensor.id)
                 except Exception as error:
                     initialized.discard(sensor.id)
                     self._stats.failure(sensor.id, error, time.monotonic_ns())

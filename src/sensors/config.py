@@ -119,7 +119,7 @@ def _load_collector(raw: object) -> CollectorConfig:
         batch_size=_integer(values, "batch_size", 100, 1, 100_000),
         flush_interval_ms=_integer(values, "flush_interval_ms", 1000, 10, 60_000),
         status_interval_ms=_integer(values, "status_interval_ms", 1000, 100, 60_000),
-        shutdown_timeout_s=_integer(values, "shutdown_timeout_s", 10, 1, 300),
+        shutdown_timeout_s=_integer(values, "shutdown_timeout_s", 10, 1, 10),
     )
 
 

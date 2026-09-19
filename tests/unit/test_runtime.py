@@ -24,3 +24,9 @@ class RuntimeStatsTest(unittest.TestCase):
         self.assertTrue(stats.dispatch("sensor"))
         self.assertFalse(stats.dispatch("sensor"))
         self.assertEqual(self.status(stats)["missed_deadlines"], 1)
+
+    def test_success_reports_recovery(self) -> None:
+        stats = RuntimeStats(["sensor"])
+        stats.failure("sensor", RuntimeError("failure"), 1)
+        self.assertTrue(stats.success("sensor", 2))
+        self.assertFalse(stats.success("sensor", 3))
