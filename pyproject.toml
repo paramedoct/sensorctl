@@ -18,7 +18,7 @@ dev = [
 ]
 
 [project.scripts]
-sensors-collector = "sensors.commands:main"
+sensorctl = "sensors.commands:main"
 
 [tool.setuptools.package-data]
 sensors = ["storage/schema.sql"]

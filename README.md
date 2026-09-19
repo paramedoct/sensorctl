@@ -75,5 +75,5 @@ python3 -m unittest discover -s tests
 ruff check .
 ruff format --check .
 mypy --strict .
-shellcheck sensorctl install uninstall utils/*.sh
+shellcheck install uninstall
 ```

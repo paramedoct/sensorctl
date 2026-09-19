@@ -3,25 +3,37 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import shutil
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from sensors import control
 from sensors.application import Collector
 from sensors.config import AppConfig, ConfigError, load_config
 from sensors.drivers.registry import DriverRegistry, PreparedDrivers
 
-DEFAULT_CONFIG = Path("/etc/sensors/sensors.toml")
+DEFAULT_CONFIG = Path(os.environ.get("SENSORS_CONFIG", "/etc/sensors/sensors.toml"))
 DEFAULT_STATUS = Path("/run/sensors/status.json")
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sensors-collector")
+    parser = argparse.ArgumentParser(prog="sensorctl")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    for name in ("collect", "validate", "status", "diagnose"):
+    for name in (
+        "collect",
+        "validate",
+        "enable",
+        "start",
+        "restart",
+        "status",
+        "diagnose",
+    ):
         subparser = subparsers.add_parser(name)
         subparser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    subparsers.add_parser("disable")
+    subparsers.add_parser("stop")
     subparsers.choices["collect"].add_argument(
         "--status-path", type=Path, default=DEFAULT_STATUS
     )
@@ -34,6 +46,14 @@ def _parser() -> argparse.ArgumentParser:
 def _prepare_config(path: Path) -> tuple[AppConfig, PreparedDrivers]:
     config = load_config(path)
     return config, DriverRegistry().prepare(config)
+
+
+def _validate(config_path: Path) -> int:
+    config, _ = _prepare_config(config_path)
+    print(
+        f"configuration valid: {len(config.sensors)} sensors, {len(config.buses)} buses"
+    )
+    return 0
 
 
 def _status(config_path: Path, status_path: Path) -> int:
@@ -99,16 +119,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     try:
         if arguments.command == "validate":
-            config, _ = _prepare_config(arguments.config)
-            print(
-                f"configuration valid: {len(config.sensors)} sensors, "
-                f"{len(config.buses)} buses"
-            )
-            return 0
+            return _validate(arguments.config)
+        if arguments.command == "enable":
+            _validate(arguments.config)
+            return control.enable()
+        if arguments.command == "start":
+            _validate(arguments.config)
+            return control.start()
+        if arguments.command == "restart":
+            _validate(arguments.config)
+            return control.restart()
+        if arguments.command == "disable":
+            return control.disable()
+        if arguments.command == "stop":
+            return control.stop()
         if arguments.command == "status":
+            control.show_status()
             return _status(arguments.config, arguments.status_path)
         if arguments.command == "diagnose":
-            return _diagnose(arguments.config)
+            result = _diagnose(arguments.config)
+            if result == 0:
+                control.show_journal()
+            return result
         config, prepared = _prepare_config(arguments.config)
         Collector(config, prepared, arguments.status_path).run()
         return 0

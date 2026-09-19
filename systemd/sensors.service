@@ -6,7 +6,7 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-ExecStart=/opt/sensors/venv/bin/python -m sensors collect
+ExecStart=/opt/sensors/venv/bin/sensorctl collect
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=15

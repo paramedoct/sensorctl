@@ -3,7 +3,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR=/opt/sensors
 CONFIG_DIR=/etc/sensors
-LIB_DIR=/usr/local/lib/sensors
 
 usage() {
   echo "usage: sudo $0" >&2
@@ -31,15 +30,12 @@ check_requirements() {
 }
 
 install_application() {
-  install -d -m 0755 "$TARGET_DIR" "$CONFIG_DIR" "$LIB_DIR/utils"
+  install -d -m 0755 "$TARGET_DIR" "$CONFIG_DIR"
   python3 -m venv --system-site-packages "$TARGET_DIR/venv"
   "$TARGET_DIR/venv/bin/pip" install \
     --disable-pip-version-check --no-build-isolation --no-deps --no-index \
     "$ROOT_DIR"
-  install -m 0755 "$ROOT_DIR/sensorctl" /usr/local/bin/sensorctl
-  install -m 0644 "$ROOT_DIR/utils/common.sh" "$LIB_DIR/utils/common.sh"
-  install -m 0644 "$ROOT_DIR/utils/service.sh" "$LIB_DIR/utils/service.sh"
-  install -m 0644 "$ROOT_DIR/utils/diagnose.sh" "$LIB_DIR/utils/diagnose.sh"
+  ln -sfn "$TARGET_DIR/venv/bin/sensorctl" /usr/local/bin/sensorctl
   if [ ! -e "$CONFIG_DIR/sensors.toml" ]; then
     install -m 0644 "$ROOT_DIR/config/sensors.example.toml" \
       "$CONFIG_DIR/sensors.toml"
