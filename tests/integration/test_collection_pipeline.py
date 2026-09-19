@@ -9,14 +9,9 @@ import unittest
 from pathlib import Path
 
 from sensors.application import Collector
-from sensors.config import (
-    AppConfig,
-    BusConfig,
-    CollectorConfig,
-    DatabaseConfig,
-    SensorConfig,
-)
+from sensors.config import CollectorConfig
 from sensors.drivers.registry import DriverRegistry
+from tests.support import make_mock_config
 
 
 class CollectionPipelineTest(unittest.TestCase):
@@ -25,28 +20,17 @@ class CollectionPipelineTest(unittest.TestCase):
             root = Path(directory)
             database_path = root / "sensors.db"
             status_path = root / "status.json"
-            config = AppConfig(
-                1,
-                CollectorConfig(
+            config = make_mock_config(
+                database_path,
+                collector=CollectorConfig(
                     queue_size=100,
                     batch_size=2,
                     flush_interval_ms=50,
                     status_interval_ms=50,
                     shutdown_timeout_s=2,
                 ),
-                DatabaseConfig(database_path),
-                {"mock": BusConfig("mock", "mock")},
-                (
-                    SensorConfig(
-                        "counter",
-                        "mock",
-                        "mock",
-                        20,
-                        "test",
-                        True,
-                        options={"start": 5, "step": 2},
-                    ),
-                ),
+                interval_ms=20,
+                options={"start": 5, "step": 2},
             )
             collector = Collector(config, DriverRegistry().prepare(config), status_path)
             thread = threading.Thread(

@@ -35,6 +35,7 @@ python_version = "3.13"
 strict = true
 packages = ["sensors"]
 mypy_path = "src"
+exclude = ["^build/", "^dist/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

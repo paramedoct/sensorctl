@@ -5,26 +5,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sensors.config import (
-    AppConfig,
-    BusConfig,
-    CollectorConfig,
-    DatabaseConfig,
-    SensorConfig,
-)
+from sensors.config import BusConfig, SensorConfig
 from sensors.drivers.registry import DriverRegistry
 from sensors.model import Sample
 from sensors.storage.database import Database, _fingerprint
-
-
-def make_config(path: Path, location: str = "test") -> AppConfig:
-    return AppConfig(
-        1,
-        CollectorConfig(),
-        DatabaseConfig(path),
-        {"mock": BusConfig("mock", "mock")},
-        (SensorConfig("counter", "mock", "mock", 100, location, True),),
-    )
+from tests.support import make_mock_config
 
 
 class DatabaseTest(unittest.TestCase):
@@ -34,7 +19,7 @@ class DatabaseTest(unittest.TestCase):
         self.path = Path(self.directory.name) / "sensors.db"
 
     def test_writes_grouped_sample(self) -> None:
-        config = make_config(self.path)
+        config = make_mock_config(self.path)
         with Database(self.path) as database:
             stored = database.register_sensors(
                 config, DriverRegistry().prepare(config).by_sensor_id
@@ -53,8 +38,8 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(row, (10, 4.0))
 
     def test_configuration_change_creates_revision(self) -> None:
-        first = make_config(self.path)
-        second = make_config(self.path, "other")
+        first = make_mock_config(self.path)
+        second = make_mock_config(self.path, location="other")
         with Database(self.path) as database:
             database.register_sensors(
                 first, DriverRegistry().prepare(first).by_sensor_id
@@ -71,10 +56,11 @@ class DatabaseTest(unittest.TestCase):
         database = Database(self.path)
         with database:
             pass
+        config = make_mock_config(self.path)
         with self.assertRaisesRegex(RuntimeError, "database is not open"):
             database.register_sensors(
-                make_config(self.path),
-                DriverRegistry().prepare(make_config(self.path)).by_sensor_id,
+                config,
+                DriverRegistry().prepare(config).by_sensor_id,
             )
 
     def test_fingerprint_remains_compatible_with_untyped_bus_values(self) -> None:

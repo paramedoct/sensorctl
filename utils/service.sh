@@ -4,10 +4,14 @@ service_validate() {
   common_python validate --config "$SENSORS_CONFIG"
 }
 
-service_enable() {
+service_apply() {
   common_require_root
   service_validate
-  systemctl enable --now sensors.service
+  systemctl "$@" sensors.service
+}
+
+service_enable() {
+  service_apply enable --now
 }
 
 service_disable() {
@@ -16,9 +20,7 @@ service_disable() {
 }
 
 service_start() {
-  common_require_root
-  service_validate
-  systemctl start sensors.service
+  service_apply start
 }
 
 service_stop() {
@@ -27,9 +29,7 @@ service_stop() {
 }
 
 service_restart() {
-  common_require_root
-  service_validate
-  systemctl restart sensors.service
+  service_apply restart
 }
 
 service_status() {
