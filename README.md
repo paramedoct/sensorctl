@@ -12,12 +12,12 @@ in the static driver registry.
 
 - Raspberry Pi OS Trixie, 32-bit or 64-bit
 - Python 3.13 or newer
-- `python3-venv`
-- `python3-setuptools`
-- Protocol packages as needed:
-  - `python3-smbus2`
-  - `python3-spidev`
-  - `python3-serial`
+
+Install the required Debian packages:
+
+```bash
+./3rdparty/setup-debian.sh
+```
 
 ## Install
 
