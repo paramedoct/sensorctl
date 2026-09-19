@@ -35,15 +35,13 @@ class DatabaseTest(unittest.TestCase):
 
     def test_writes_grouped_sample(self) -> None:
         config = make_config(self.path)
-        database = Database(self.path)
-        database.open()
-        stored = database.register_sensors(
-            config, DriverRegistry().prepare(config).by_sensor_id
-        )
-        database.write_samples(
-            [Sample("counter", 10, 20, "boot", {"value": 4.0})], stored
-        )
-        database.close()
+        with Database(self.path) as database:
+            stored = database.register_sensors(
+                config, DriverRegistry().prepare(config).by_sensor_id
+            )
+            database.write_samples(
+                [Sample("counter", 10, 20, "boot", {"value": 4.0})], stored
+            )
         connection = sqlite3.connect(self.path)
         row = connection.execute(
             """
@@ -55,17 +53,29 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(row, (10, 4.0))
 
     def test_configuration_change_creates_revision(self) -> None:
-        database = Database(self.path)
-        database.open()
         first = make_config(self.path)
         second = make_config(self.path, "other")
-        database.register_sensors(first, DriverRegistry().prepare(first).by_sensor_id)
-        database.register_sensors(second, DriverRegistry().prepare(second).by_sensor_id)
-        database.close()
+        with Database(self.path) as database:
+            database.register_sensors(
+                first, DriverRegistry().prepare(first).by_sensor_id
+            )
+            database.register_sensors(
+                second, DriverRegistry().prepare(second).by_sensor_id
+            )
         connection = sqlite3.connect(self.path)
         count = connection.execute("SELECT COUNT(*) FROM sensor_instance").fetchone()
         connection.close()
         self.assertEqual(count, (2,))
+
+    def test_context_manager_closes_connection(self) -> None:
+        database = Database(self.path)
+        with database:
+            pass
+        with self.assertRaisesRegex(RuntimeError, "database is not open"):
+            database.register_sensors(
+                make_config(self.path),
+                DriverRegistry().prepare(make_config(self.path)).by_sensor_id,
+            )
 
     def test_fingerprint_remains_compatible_with_untyped_bus_values(self) -> None:
         sensor = SensorConfig(

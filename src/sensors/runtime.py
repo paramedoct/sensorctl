@@ -222,41 +222,42 @@ class DatabaseWriter(threading.Thread):
         self.error: Exception | None = None
 
     def run(self) -> None:
-        database = Database(self._config.database.path)
         batch: list[Sample] = []
         flush_seconds = self._config.collector.flush_interval_ms / 1000
         deadline = time.monotonic() + flush_seconds
         try:
-            database.open()
-            while True:
-                timeout = max(0.0, deadline - time.monotonic())
-                try:
-                    sample = self._results.get(timeout=min(timeout, 0.1))
-                    if sample is None:
+            with Database(self._config.database.path) as database:
+                while True:
+                    timeout = max(0.0, deadline - time.monotonic())
+                    try:
+                        sample = self._results.get(timeout=min(timeout, 0.1))
+                        if sample is None:
+                            self._results.task_done()
+                            break
+                        batch.append(sample)
                         self._results.task_done()
-                        break
-                    batch.append(sample)
-                    self._results.task_done()
-                except queue.Empty:
-                    pass
-                if len(batch) >= self._config.collector.batch_size or (
-                    batch and time.monotonic() >= deadline
-                ):
-                    database.write_samples(batch, self._stored)
-                    self._stats.committed(batch)
-                    batch.clear()
-                    deadline = time.monotonic() + flush_seconds
-                elif time.monotonic() >= deadline:
-                    deadline = time.monotonic() + flush_seconds
-            if batch:
-                database.write_samples(batch, self._stored)
-                self._stats.committed(batch)
+                    except queue.Empty:
+                        pass
+                    now = time.monotonic()
+                    should_flush = len(batch) >= self._config.collector.batch_size or (
+                        bool(batch) and now >= deadline
+                    )
+                    if should_flush:
+                        self._flush(database, batch)
+                    if should_flush or now >= deadline:
+                        deadline = now + flush_seconds
+                self._flush(database, batch)
         except Exception as error:
             self.error = error
             LOGGER.exception("database writer failed")
             self._stop_event.set()
-        finally:
-            database.close(checkpoint=self.error is None)
+
+    def _flush(self, database: Database, batch: list[Sample]) -> None:
+        if not batch:
+            return
+        database.write_samples(batch, self._stored)
+        self._stats.committed(batch)
+        batch.clear()
 
 
 class StatusWriter(threading.Thread):

@@ -7,6 +7,8 @@ import time
 from collections.abc import Mapping
 from importlib.resources import files
 from pathlib import Path
+from types import TracebackType
+from typing import Self
 
 from sensors.config import AppConfig, BusConfig, SensorConfig
 from sensors.drivers.base import SensorDriver
@@ -17,6 +19,19 @@ class Database:
     def __init__(self, path: Path) -> None:
         self.path = path
         self._connection: sqlite3.Connection | None = None
+
+    def __enter__(self) -> Self:
+        self.open()
+        return self
+
+    def __exit__(
+        self,
+        exception_type: type[BaseException] | None,
+        exception: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        del exception, traceback
+        self.close(checkpoint=exception_type is None)
 
     def open(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

@@ -44,10 +44,8 @@ class Collector:
         drivers = self._prepared.by_sensor_id
         if not enabled:
             raise RuntimeError("at least one enabled sensor is required")
-        database = Database(self._config.database.path)
-        database.open()
-        stored = database.register_sensors(self._config, drivers)
-        database.close()
+        with Database(self._config.database.path) as database:
+            stored = database.register_sensors(self._config, drivers)
         boot_id = _read_boot_id()
         stats = RuntimeStats([sensor.id for sensor in enabled])
         results: queue.Queue[Sample | None] = queue.Queue(
@@ -129,18 +127,15 @@ class Collector:
                 time.monotonic() + self._config.collector.shutdown_timeout_s
             )
             for worker in workers:
-                worker.join(max(0.0, shutdown_deadline - time.monotonic()))
+                worker.join(_remaining(shutdown_deadline))
             if writer.is_alive():
                 try:
-                    results.put(
-                        None,
-                        timeout=max(0.0, shutdown_deadline - time.monotonic()),
-                    )
+                    results.put(None, timeout=_remaining(shutdown_deadline))
                 except queue.Full:
                     LOGGER.error("result queue did not drain before shutdown deadline")
-            writer.join(max(0.0, shutdown_deadline - time.monotonic()))
+            writer.join(_remaining(shutdown_deadline))
             status_writer.write()
-            status_writer.join(max(0.0, shutdown_deadline - time.monotonic()))
+            status_writer.join(_remaining(shutdown_deadline))
         if writer.error is not None:
             raise RuntimeError("database writer failed") from writer.error
 
@@ -158,3 +153,7 @@ def _read_boot_id() -> str:
         return Path("/proc/sys/kernel/random/boot_id").read_text().strip()
     except OSError:
         return "unknown"
+
+
+def _remaining(deadline: float) -> float:
+    return max(0.0, deadline - time.monotonic())
