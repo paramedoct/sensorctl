@@ -1,9 +1,15 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from sensors.config import BusConfig
 from sensors.transports.base import Transport
+
+
+@runtime_checkable
+class I2CDevice(Protocol):
+    def transfer(self, address: int, write: bytes, read_length: int) -> bytes:
+        """Perform one combined I2C transaction."""
 
 
 class I2CTransport(Transport):
