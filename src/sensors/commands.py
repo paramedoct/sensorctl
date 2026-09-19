@@ -10,7 +10,7 @@ from pathlib import Path
 
 from sensors.application import Collector
 from sensors.config import AppConfig, ConfigError, load_config
-from sensors.drivers.registry import DriverRegistry
+from sensors.drivers.registry import DriverRegistry, PreparedDrivers
 
 DEFAULT_CONFIG = Path("/etc/sensors/sensors.toml")
 DEFAULT_STATUS = Path("/run/sensors/status.json")
@@ -31,14 +31,13 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _validated_config(path: Path) -> AppConfig:
+def _prepare_config(path: Path) -> tuple[AppConfig, PreparedDrivers]:
     config = load_config(path)
-    DriverRegistry().validate(config)
-    return config
+    return config, DriverRegistry().prepare(config)
 
 
 def _status(config_path: Path, status_path: Path) -> int:
-    config = _validated_config(config_path)
+    config, _ = _prepare_config(config_path)
     print(f"database: {config.database.path}")
     if config.database.path.exists():
         usage = shutil.disk_usage(config.database.path.parent)
@@ -71,7 +70,7 @@ def _status(config_path: Path, status_path: Path) -> int:
 
 
 def _diagnose(config_path: Path) -> int:
-    config = _validated_config(config_path)
+    config, _ = _prepare_config(config_path)
     failed = False
     print(f"config: ok ({config_path})")
     print(f"python: {sys.version.split()[0]}")
@@ -100,7 +99,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     try:
         if arguments.command == "validate":
-            config = _validated_config(arguments.config)
+            config, _ = _prepare_config(arguments.config)
             print(
                 f"configuration valid: {len(config.sensors)} sensors, "
                 f"{len(config.buses)} buses"
@@ -110,8 +109,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _status(arguments.config, arguments.status_path)
         if arguments.command == "diagnose":
             return _diagnose(arguments.config)
-        config = _validated_config(arguments.config)
-        Collector(config, arguments.status_path).run()
+        config, prepared = _prepare_config(arguments.config)
+        Collector(config, prepared, arguments.status_path).run()
         return 0
     except (ConfigError, OSError, RuntimeError) as error:
         print(f"error: {error}", file=sys.stderr)

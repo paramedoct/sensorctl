@@ -4,7 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sensors.config import AppConfig, ConfigError, load_config
+from sensors.config import AppConfig, ConfigError, SensorConfig, load_config
+from sensors.drivers.mock import MockDriver
 from sensors.drivers.registry import DriverRegistry
 
 VALID_CONFIG = """
@@ -39,7 +40,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_loads_valid_configuration(self) -> None:
         config = self.load(VALID_CONFIG)
-        DriverRegistry().validate(config)
+        DriverRegistry().prepare(config)
         self.assertEqual(config.sensors[0].interval_ms, 100)
         self.assertEqual(config.sensors[0].options["step"], 3)
         self.assertEqual(config.buses["mock_main"].retries, 0)
@@ -84,7 +85,7 @@ location = "other"
             '[buses.mock_main]\ntype = "uart"\ndevice = "/dev/ttyS0"',
         )
         with self.assertRaisesRegex(ConfigError, "does not support"):
-            DriverRegistry().validate(self.load(invalid))
+            DriverRegistry().prepare(self.load(invalid))
 
     def test_rejects_shutdown_timeout_above_service_limit(self) -> None:
         invalid = VALID_CONFIG.replace(
@@ -92,3 +93,18 @@ location = "other"
         )
         with self.assertRaisesRegex(ConfigError, "between 1 and 10"):
             self.load(invalid)
+
+    def test_prepares_each_driver_once(self) -> None:
+        created = 0
+
+        class CountingDriver(MockDriver):
+            def __init__(self, sensor: SensorConfig) -> None:
+                nonlocal created
+                created += 1
+                super().__init__(sensor)
+
+        config = self.load(VALID_CONFIG)
+        prepared = DriverRegistry({"mock": CountingDriver}).prepare(config)
+        self.assertEqual(created, 1)
+        self.assertEqual(prepared.sensors, config.sensors)
+        self.assertIsInstance(prepared.by_sensor_id["counter"], CountingDriver)

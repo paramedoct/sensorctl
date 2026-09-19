@@ -16,6 +16,7 @@ from sensors.config import (
     DatabaseConfig,
     SensorConfig,
 )
+from sensors.drivers.registry import DriverRegistry
 
 
 class CollectionPipelineTest(unittest.TestCase):
@@ -47,7 +48,7 @@ class CollectionPipelineTest(unittest.TestCase):
                     ),
                 ),
             )
-            collector = Collector(config, status_path)
+            collector = Collector(config, DriverRegistry().prepare(config), status_path)
             thread = threading.Thread(
                 target=collector.run, kwargs={"install_signal_handlers": False}
             )

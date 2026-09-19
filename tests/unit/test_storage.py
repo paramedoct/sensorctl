@@ -38,7 +38,7 @@ class DatabaseTest(unittest.TestCase):
         database = Database(self.path)
         database.open()
         stored = database.register_sensors(
-            config, {"counter": DriverRegistry().create(config.sensors[0])}
+            config, DriverRegistry().prepare(config).by_sensor_id
         )
         database.write_samples(
             [Sample("counter", 10, 20, "boot", {"value": 4.0})], stored
@@ -59,12 +59,8 @@ class DatabaseTest(unittest.TestCase):
         database.open()
         first = make_config(self.path)
         second = make_config(self.path, "other")
-        database.register_sensors(
-            first, {"counter": DriverRegistry().create(first.sensors[0])}
-        )
-        database.register_sensors(
-            second, {"counter": DriverRegistry().create(second.sensors[0])}
-        )
+        database.register_sensors(first, DriverRegistry().prepare(first).by_sensor_id)
+        database.register_sensors(second, DriverRegistry().prepare(second).by_sensor_id)
         database.close()
         connection = sqlite3.connect(self.path)
         count = connection.execute("SELECT COUNT(*) FROM sensor_instance").fetchone()

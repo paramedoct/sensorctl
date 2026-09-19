@@ -9,8 +9,7 @@ from pathlib import Path
 from types import FrameType
 
 from sensors.config import AppConfig
-from sensors.drivers.base import SensorDriver
-from sensors.drivers.registry import DriverRegistry
+from sensors.drivers.registry import PreparedDrivers
 from sensors.model import Sample
 from sensors.runtime import (
     BusWorker,
@@ -29,9 +28,11 @@ class Collector:
     def __init__(
         self,
         config: AppConfig,
+        prepared: PreparedDrivers,
         status_path: Path = Path("/run/sensors/status.json"),
     ) -> None:
         self._config = config
+        self._prepared = prepared
         self._status_path = status_path
         self._stop_event = threading.Event()
 
@@ -39,12 +40,8 @@ class Collector:
         self._stop_event.set()
 
     def run(self, install_signal_handlers: bool = True) -> None:
-        registry = DriverRegistry()
-        registry.validate(self._config)
-        enabled = [sensor for sensor in self._config.sensors if sensor.enabled]
-        drivers: dict[str, SensorDriver] = {
-            sensor.id: registry.create(sensor) for sensor in enabled
-        }
+        enabled = self._prepared.sensors
+        drivers = self._prepared.by_sensor_id
         if not enabled:
             raise RuntimeError("at least one enabled sensor is required")
         database = Database(self._config.database.path)
