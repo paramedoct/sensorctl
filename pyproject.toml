@@ -9,7 +9,7 @@ description = "Configuration-driven sensor time-series collector"
 readme = "README.md"
 requires-python = ">=3.13"
 authors = [{ name = "sensors contributors" }]
-dependencies = []
+dynamic = ["dependencies"]
 
 [project.optional-dependencies]
 dev = [
@@ -19,6 +19,9 @@ dev = [
 
 [project.scripts]
 sensorctl = "sensors.commands:main"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.package-data]
 sensors = ["storage/schema.sql"]
