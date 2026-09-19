@@ -6,6 +6,7 @@ from types import MappingProxyType
 
 from sensors.config import AppConfig, ConfigError, SensorConfig
 from sensors.drivers.base import SensorDriver
+from sensors.drivers.bmp280 import BMP280Driver
 from sensors.drivers.mock import MockDriver
 
 DriverFactory = Callable[[SensorConfig], SensorDriver]
@@ -19,7 +20,9 @@ class PreparedDrivers:
 
 class DriverRegistry:
     def __init__(self, factories: Mapping[str, DriverFactory] | None = None) -> None:
-        self._factories = dict(factories or {"mock": MockDriver})
+        self._factories = dict(
+            factories or {"bmp280": BMP280Driver, "mock": MockDriver}
+        )
 
     def _create(self, sensor: SensorConfig) -> SensorDriver:
         factory = self._factories.get(sensor.driver)

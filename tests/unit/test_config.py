@@ -45,6 +45,13 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.sensors[0].options["step"], 3)
         self.assertEqual(config.buses["mock_main"].retries, 0)
 
+    def test_loads_bmp280_example(self) -> None:
+        path = Path(__file__).parents[2] / "config" / "bmp280.example.toml"
+        config = load_config(path)
+        prepared = DriverRegistry().prepare(config)
+        driver = prepared.by_sensor_id["room_environment"]
+        self.assertEqual(driver.fields[0].name, "temperature")
+
     def test_loads_typed_bus_values(self) -> None:
         config = self.load(
             VALID_CONFIG.replace(

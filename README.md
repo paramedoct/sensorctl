@@ -4,9 +4,9 @@
 It schedules configured sensor drivers, accesses I2C, SPI, and UART devices,
 and stores numeric measurements in SQLite.
 
-The first release includes a deterministic mock driver and production
-transport adapters. Hardware-specific drivers can be added to the static
-driver registry.
+The first release includes a BMP280 I2C driver, a deterministic mock driver,
+and production transport adapters. Hardware-specific drivers are registered
+in the static driver registry.
 
 ## Requirements
 
@@ -45,6 +45,17 @@ sensorctl disable
 ```
 
 Configuration changes take effect after validation and restart.
+
+## BMP280 over I2C
+
+Connect the module to 3.3 V, ground, SDA, and SCL. Enable the Raspberry Pi I2C
+interface, install `python3-smbus2`, and adapt
+`config/bmp280.example.toml`. The driver accepts addresses `0x76` and `0x77`.
+It records `temperature` in degrees Celsius and `pressure` in pascals.
+
+The optional `temperature_oversampling` and `pressure_oversampling` values are
+`1`, `2`, `4`, `8`, or `16`. Both default to `1`. Higher values reduce noise
+but increase measurement time.
 
 ## Database export
 

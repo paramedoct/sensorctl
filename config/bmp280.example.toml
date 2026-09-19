@@ -1,0 +1,30 @@
+version = 1
+
+[collector]
+queue_size = 1000
+batch_size = 100
+flush_interval_ms = 1000
+status_interval_ms = 1000
+shutdown_timeout_s = 10
+
+[database]
+path = "/var/lib/sensors/sensors.db"
+
+[buses.i2c_main]
+type = "i2c"
+device = "/dev/i2c-1"
+timeout_ms = 100
+retries = 2
+
+[[sensors]]
+id = "room_environment"
+driver = "bmp280"
+bus = "i2c_main"
+address = 0x76
+interval_ms = 1000
+location = "room"
+enabled = true
+
+[sensors.options]
+temperature_oversampling = 1
+pressure_oversampling = 1
