@@ -24,13 +24,18 @@ check_requirements() {
     echo "python3-venv is required" >&2
     exit 1
   }
+  python3 -c 'import setuptools' >/dev/null 2>&1 || {
+    echo "python3-setuptools is required" >&2
+    exit 1
+  }
 }
 
 install_application() {
   install -d -m 0755 "$TARGET_DIR" "$CONFIG_DIR" "$LIB_DIR/utils"
   python3 -m venv --system-site-packages "$TARGET_DIR/venv"
   "$TARGET_DIR/venv/bin/pip" install \
-    --disable-pip-version-check --no-build-isolation --no-deps "$ROOT_DIR"
+    --disable-pip-version-check --no-build-isolation --no-deps --no-index \
+    "$ROOT_DIR"
   install -m 0755 "$ROOT_DIR/sensorctl" /usr/local/bin/sensorctl
   install -m 0644 "$ROOT_DIR/utils/common.sh" "$LIB_DIR/utils/common.sh"
   install -m 0644 "$ROOT_DIR/utils/service.sh" "$LIB_DIR/utils/service.sh"
