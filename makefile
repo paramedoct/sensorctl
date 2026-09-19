@@ -15,8 +15,7 @@ LEGACY_LIB_DIR := /usr/local/lib/sensors
 
 all:
 	@if [ "$$(id -u)" -ne 0 ]; then
-	  echo "make must run as root" >&2
-	  exit 1
+	  exec sudo -- make --no-print-directory all
 	fi
 	if ! python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 13))'; then
 	  echo "Python 3.13 or newer is required" >&2
@@ -48,8 +47,7 @@ all:
 
 clean:
 	@if [ "$$(id -u)" -ne 0 ]; then
-	  echo "make clean must run as root" >&2
-	  exit 1
+	  exec sudo -- make --no-print-directory clean
 	fi
 	systemctl disable --now sensorctl.service 2>/dev/null || true
 	systemctl disable --now sensors.service 2>/dev/null || true

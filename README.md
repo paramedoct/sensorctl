@@ -22,7 +22,7 @@ Install the required Debian packages:
 ## Install
 
 ```bash
-sudo make
+make
 sudo editor /etc/sensors/sensors.toml
 sudo sensorctl validate
 sudo sensorctl enable
@@ -34,7 +34,7 @@ starts automatically on every boot.
 To remove the application and service while preserving configuration and data:
 
 ```bash
-sudo make clean
+make clean
 ```
 
 ## Commands
