@@ -22,7 +22,7 @@ in the static driver registry.
 ## Install
 
 ```bash
-sudo ./install
+sudo make
 sudo editor /etc/sensors/sensors.toml
 sudo sensorctl validate
 sudo sensorctl enable
@@ -30,6 +30,12 @@ sudo sensorctl enable
 
 Installation does not enable or start the service. Once enabled, the service
 starts automatically on every boot.
+
+To remove the application and service while preserving configuration and data:
+
+```bash
+sudo make clean
+```
 
 ## Commands
 
@@ -75,5 +81,6 @@ python3 -m unittest discover -s tests
 ruff check .
 ruff format --check .
 mypy --strict .
-shellcheck install uninstall
+make --dry-run
+make --dry-run clean
 ```
