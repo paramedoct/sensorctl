@@ -1,6 +1,6 @@
-# sensors
+# sensorctl
 
-`sensors` is a lightweight time-series collector for Raspberry Pi Zero 2 W.
+`sensorctl` is a lightweight time-series collector for Raspberry Pi Zero 2 W.
 It schedules configured sensor drivers, accesses I2C, SPI, and UART devices,
 and stores numeric measurements in SQLite.
 

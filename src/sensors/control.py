@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 
-SERVICE_NAME = "sensors.service"
+SERVICE_NAME = "sensorctl.service"
 
 
 def _require_root() -> None:

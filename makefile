@@ -6,7 +6,8 @@ SHELL := /bin/bash
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 TARGET_DIR := /opt/sensors
 CONFIG_DIR := /etc/sensors
-SERVICE_FILE := /etc/systemd/system/sensors.service
+SERVICE_FILE := /etc/systemd/system/sensorctl.service
+LEGACY_SERVICE_FILE := /etc/systemd/system/sensors.service
 COMMAND_LINK := /usr/local/bin/sensorctl
 LEGACY_LIB_DIR := /usr/local/lib/sensors
 
@@ -39,7 +40,9 @@ all:
 	  install -m 0644 "$(ROOT_DIR)/config/sensors.example.toml" \
 	    "$(CONFIG_DIR)/sensors.toml"
 	fi
-	install -m 0644 "$(ROOT_DIR)/systemd/sensors.service" "$(SERVICE_FILE)"
+	systemctl disable --now sensors.service 2>/dev/null || true
+	rm -f "$(LEGACY_SERVICE_FILE)"
+	install -m 0644 "$(ROOT_DIR)/systemd/sensorctl.service" "$(SERVICE_FILE)"
 	systemctl daemon-reload
 	echo "installed; edit /etc/sensors/sensors.toml and run: sensorctl enable"
 
@@ -48,8 +51,10 @@ clean:
 	  echo "make clean must run as root" >&2
 	  exit 1
 	fi
+	systemctl disable --now sensorctl.service 2>/dev/null || true
 	systemctl disable --now sensors.service 2>/dev/null || true
 	rm -f "$(SERVICE_FILE)"
+	rm -f "$(LEGACY_SERVICE_FILE)"
 	rm -f "$(COMMAND_LINK)"
 	rm -rf "$(TARGET_DIR)"
 	rm -rf "$(LEGACY_LIB_DIR)"

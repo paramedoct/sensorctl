@@ -14,7 +14,7 @@ class ControlTest(unittest.TestCase):
         with patch("sensors.control.subprocess.run", return_value=completed) as runner:
             self.assertEqual(control.enable(), 0)
         runner.assert_called_once_with(
-            ["systemctl", "enable", "--now", "sensors.service"], check=False
+            ["systemctl", "enable", "--now", "sensorctl.service"], check=False
         )
 
     @patch("sensors.control.os.geteuid", return_value=1000)
@@ -32,7 +32,7 @@ class ControlTest(unittest.TestCase):
                 "--no-pager",
                 "--full",
                 "status",
-                "sensors.service",
+                "sensorctl.service",
             ],
             check=False,
         )
