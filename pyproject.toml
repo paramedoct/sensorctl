@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rpi-sensors"
+version = "0.1.0"
+description = "Configuration-driven sensor time-series collector"
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [{ name = "sensors contributors" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.19,<2",
+    "ruff>=0.15,<1",
+]
+
+[project.scripts]
+sensors-collector = "sensors.commands:main"
+
+[tool.setuptools.package-data]
+sensors = ["storage/schema.sql"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+packages = ["sensors"]
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

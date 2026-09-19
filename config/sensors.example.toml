@@ -1,0 +1,26 @@
+version = 1
+
+[collector]
+queue_size = 1000
+batch_size = 100
+flush_interval_ms = 1000
+status_interval_ms = 1000
+shutdown_timeout_s = 10
+
+[database]
+path = "/var/lib/sensors/sensors.db"
+
+[buses.mock_main]
+type = "mock"
+
+[[sensors]]
+id = "example_counter"
+driver = "mock"
+bus = "mock_main"
+interval_ms = 1000
+location = "development"
+enabled = true
+
+[sensors.options]
+start = 0.0
+step = 1.0

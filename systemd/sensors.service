@@ -1,0 +1,31 @@
+[Unit]
+Description=Sensor time-series collector
+After=local-fs.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/opt/sensors/venv/bin/python -m sensors collect
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+RuntimeDirectory=sensors
+StateDirectory=sensors
+User=root
+Group=root
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX
+ReadWritePaths=/var/lib/sensors /run/sensors
+
+[Install]
+WantedBy=multi-user.target

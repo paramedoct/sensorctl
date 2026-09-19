@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: sudo $0" >&2
+  exit 1
+}
+
+main() {
+  [ "$#" -eq 0 ] || usage
+  [ "$(id -u)" -eq 0 ] || {
+    echo "uninstall must run as root" >&2
+    exit 1
+  }
+  systemctl disable --now sensors.service 2>/dev/null || true
+  rm -f /etc/systemd/system/sensors.service
+  rm -f /usr/local/bin/sensorctl
+  rm -rf /opt/sensors
+  rm -rf /usr/local/lib/sensors
+  systemctl daemon-reload
+  echo "removed application; /etc/sensors and /var/lib/sensors were preserved"
+}
+
+main "$@"

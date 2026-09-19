@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UTILS_DIR="$ROOT_DIR/utils"
+
+if [ ! -d "$UTILS_DIR" ]; then
+  UTILS_DIR=/usr/local/lib/sensors/utils
+fi
+
+# shellcheck source=/dev/null
+source "$UTILS_DIR/common.sh"
+# shellcheck source=/dev/null
+source "$UTILS_DIR/service.sh"
+# shellcheck source=/dev/null
+source "$UTILS_DIR/diagnose.sh"
+
+usage() {
+  echo "$0 <validate|enable|disable|start|stop|restart|status|diagnose>" >&2
+  exit 1
+}
+
+main() {
+  [ "$#" -eq 1 ] || usage
+  case "$1" in
+    validate) service_validate ;;
+    enable) service_enable ;;
+    disable) service_disable ;;
+    start) service_start ;;
+    stop) service_stop ;;
+    restart) service_restart ;;
+    status) service_status ;;
+    diagnose) diagnose_run ;;
+    *) usage ;;
+  esac
+}
+
+main "$@"

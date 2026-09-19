@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TARGET_DIR=/opt/sensors
+CONFIG_DIR=/etc/sensors
+LIB_DIR=/usr/local/lib/sensors
+
+usage() {
+  echo "usage: sudo $0" >&2
+  exit 1
+}
+
+check_requirements() {
+  [ "$#" -eq 0 ] || usage
+  [ "$(id -u)" -eq 0 ] || {
+    echo "install must run as root" >&2
+    exit 1
+  }
+  python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 13))' || {
+    echo "Python 3.13 or newer is required" >&2
+    exit 1
+  }
+  python3 -m venv --help >/dev/null 2>&1 || {
+    echo "python3-venv is required" >&2
+    exit 1
+  }
+}
+
+install_application() {
+  install -d -m 0755 "$TARGET_DIR" "$CONFIG_DIR" "$LIB_DIR/utils"
+  python3 -m venv --system-site-packages "$TARGET_DIR/venv"
+  "$TARGET_DIR/venv/bin/pip" install \
+    --disable-pip-version-check --no-build-isolation --no-deps "$ROOT_DIR"
+  install -m 0755 "$ROOT_DIR/sensorctl" /usr/local/bin/sensorctl
+  install -m 0644 "$ROOT_DIR/utils/common.sh" "$LIB_DIR/utils/common.sh"
+  install -m 0644 "$ROOT_DIR/utils/service.sh" "$LIB_DIR/utils/service.sh"
+  install -m 0644 "$ROOT_DIR/utils/diagnose.sh" "$LIB_DIR/utils/diagnose.sh"
+  if [ ! -e "$CONFIG_DIR/sensors.toml" ]; then
+    install -m 0644 "$ROOT_DIR/config/sensors.example.toml" \
+      "$CONFIG_DIR/sensors.toml"
+  fi
+  install -m 0644 "$ROOT_DIR/systemd/sensors.service" \
+    /etc/systemd/system/sensors.service
+  systemctl daemon-reload
+}
+
+main() {
+  check_requirements "$@"
+  install_application
+  echo "installed; edit /etc/sensors/sensors.toml and run: sensorctl enable"
+}
+
+main "$@"
