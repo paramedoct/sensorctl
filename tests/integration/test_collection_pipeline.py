@@ -8,9 +8,9 @@ import time
 import unittest
 from pathlib import Path
 
-from sensors.application import Collector
-from sensors.config import CollectorConfig
-from sensors.drivers.registry import DriverRegistry
+from application import Collector
+from config import CollectorConfig
+from drivers.registry import DriverRegistry
 from tests.support import make_mock_config
 
 
@@ -18,7 +18,7 @@ class CollectionPipelineTest(unittest.TestCase):
     def test_mock_samples_reach_database_and_status(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            database_path = root / "sensors.db"
+            database_path = root / "db"
             status_path = root / "status.json"
             config = make_mock_config(
                 database_path,

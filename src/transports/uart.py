@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from sensors.config import BusConfig
-from sensors.transports.base import Transport
+from config import BusConfig
+from transports.base import Transport
 
 
 class UARTTransport(Transport):

@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import cast
 
-from sensors.config import ConfigError, SensorConfig
-from sensors.drivers.base import SensorDriver
-from sensors.model import FieldDefinition
-from sensors.transports.base import Transport
+from config import ConfigError, SensorConfig
+from drivers.base import SensorDriver
+from model import FieldDefinition
+from transports.base import Transport
 
 
 class MockDriver(SensorDriver):

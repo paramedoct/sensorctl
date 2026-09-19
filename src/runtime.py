@@ -11,11 +11,11 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from sensors.config import AppConfig, SensorConfig
-from sensors.drivers.base import SensorDriver
-from sensors.model import Sample, StoredSensor
-from sensors.storage.database import Database
-from sensors.transports.base import Transport
+from config import AppConfig, SensorConfig
+from drivers.base import SensorDriver
+from model import Sample, StoredSensor
+from storage.database import Database
+from transports.base import Transport
 
 LOGGER = logging.getLogger(__name__)
 

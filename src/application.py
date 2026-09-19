@@ -8,18 +8,18 @@ import time
 from pathlib import Path
 from types import FrameType
 
-from sensors.config import AppConfig
-from sensors.drivers.registry import PreparedDrivers
-from sensors.model import Sample
-from sensors.runtime import (
+from config import AppConfig
+from drivers.registry import PreparedDrivers
+from model import Sample
+from runtime import (
     BusWorker,
     DatabaseWriter,
     ReadTask,
     RuntimeStats,
     StatusWriter,
 )
-from sensors.storage.database import Database
-from sensors.transports.base import create_transport
+from storage.database import Database
+from transports.base import create_transport
 
 LOGGER = logging.getLogger(__name__)
 

@@ -5,10 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sensors.config import BusConfig, SensorConfig
-from sensors.drivers.registry import DriverRegistry
-from sensors.model import Sample
-from sensors.storage.database import Database, _fingerprint
+from config import BusConfig, SensorConfig
+from drivers.registry import DriverRegistry
+from model import Sample
+from storage.database import Database, _fingerprint
 from tests.support import make_mock_config
 
 
@@ -16,7 +16,7 @@ class DatabaseTest(unittest.TestCase):
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
-        self.path = Path(self.directory.name) / "sensors.db"
+        self.path = Path(self.directory.name) / "db"
 
     def test_writes_grouped_sample(self) -> None:
         config = make_mock_config(self.path)

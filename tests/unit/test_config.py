@@ -4,9 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sensors.config import AppConfig, ConfigError, SensorConfig, load_config
-from sensors.drivers.mock import MockDriver
-from sensors.drivers.registry import DriverRegistry
+from config import AppConfig, ConfigError, SensorConfig, load_config
+from drivers.mock import MockDriver
+from drivers.registry import DriverRegistry
 
 VALID_CONFIG = """
 version = 1
@@ -34,7 +34,7 @@ class ConfigTest(unittest.TestCase):
     def load(self, contents: str) -> AppConfig:
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        path = Path(directory.name) / "sensors.toml"
+        path = Path(directory.name) / "toml"
         path.write_text(contents)
         return load_config(path)
 

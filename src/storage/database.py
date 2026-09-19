@@ -10,9 +10,9 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
-from sensors.config import AppConfig, BusConfig, SensorConfig
-from sensors.drivers.base import SensorDriver
-from sensors.model import Sample, StoredSensor
+from config import AppConfig, BusConfig, SensorConfig
+from drivers.base import SensorDriver
+from model import Sample, StoredSensor
 
 
 class Database:
@@ -39,7 +39,7 @@ class Database:
         connection.execute("PRAGMA journal_mode = WAL")
         connection.execute("PRAGMA synchronous = NORMAL")
         connection.execute("PRAGMA foreign_keys = ON")
-        schema = files("sensors.storage").joinpath("schema.sql").read_text()
+        schema = files("storage").joinpath("schema.sql").read_text()
         connection.executescript(schema)
         version = connection.execute("SELECT version FROM schema_version").fetchone()
         if version != (1,):

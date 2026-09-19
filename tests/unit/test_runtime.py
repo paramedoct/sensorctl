@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from typing import Any, cast
 
-from sensors.runtime import RuntimeStats
+from runtime import RuntimeStats
 
 
 class RuntimeStatsTest(unittest.TestCase):

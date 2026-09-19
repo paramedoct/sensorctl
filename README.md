@@ -77,7 +77,7 @@ sudo sensorctl start
 ## Development
 
 ```bash
-python3 -m unittest discover -s tests
+PYTHONPATH=src python3 -m unittest discover -s tests
 ruff check .
 ruff format --check .
 mypy --strict .

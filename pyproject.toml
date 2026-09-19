@@ -22,10 +22,15 @@ dev = [
 ]
 
 [project.scripts]
-sensorctl = "sensors.commands:main"
+sensorctl = "commands:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = ["drivers", "storage", "transports"]
+py-modules = ["application", "commands", "config", "control", "model", "runtime"]
 
 [tool.setuptools.package-data]
-sensors = ["storage/schema.sql"]
+storage = ["schema.sql"]
 
 [tool.ruff]
 target-version = "py313"
@@ -37,7 +42,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-packages = ["sensors"]
+files = ["src", "tests"]
 mypy_path = "src"
 exclude = ["^build/", "^dist/"]
 

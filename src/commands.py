@@ -9,10 +9,10 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from sensors import control
-from sensors.application import Collector
-from sensors.config import AppConfig, ConfigError, load_config
-from sensors.drivers.registry import DriverRegistry, PreparedDrivers
+import control
+from application import Collector
+from config import AppConfig, ConfigError, load_config
+from drivers.registry import DriverRegistry, PreparedDrivers
 
 DEFAULT_CONFIG = Path(os.environ.get("SENSORS_CONFIG", "/etc/sensors/sensors.toml"))
 DEFAULT_STATUS = Path("/run/sensors/status.json")

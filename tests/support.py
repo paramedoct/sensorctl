@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from sensors.config import (
+from config import (
     AppConfig,
     BusConfig,
     CollectorConfig,
