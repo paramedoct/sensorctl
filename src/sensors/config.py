@@ -57,7 +57,31 @@ class DatabaseConfig:
 class BusConfig:
     id: str
     type: BusType
-    values: Mapping[str, object] = field(default_factory=dict)
+    device: Path | None = None
+    timeout_ms: int = 100
+    retries: int = 0
+    mode: int = 0
+    max_speed_hz: int = 1_000_000
+    baud_rate: int = 9600
+
+    def require_device(self) -> Path:
+        if self.device is None:
+            raise ConfigError(f"bus {self.id} does not have a device")
+        return self.device
+
+    def fingerprint_values(self) -> dict[str, object]:
+        if self.type == "mock":
+            return {}
+        values: dict[str, object] = {
+            "device": str(self.require_device()),
+            "timeout_ms": self.timeout_ms,
+            "retries": self.retries,
+        }
+        if self.type == "spi":
+            values.update(mode=self.mode, max_speed_hz=self.max_speed_hz)
+        elif self.type == "uart":
+            values["baud_rate"] = self.baud_rate
+        return values
 
 
 @dataclass(frozen=True)
@@ -129,35 +153,42 @@ def _load_bus(bus_id: str, raw: object) -> BusConfig:
     if not isinstance(bus_type, str) or bus_type not in _BUS_KEYS:
         raise ConfigError(f"bus {bus_id} has unsupported type")
     _reject_unknown(values, _BUS_KEYS[bus_type], f"bus {bus_id}")
-    parsed: dict[str, object] = {}
-    if bus_type != "mock":
-        device = _string(values, "device")
-        if not device.startswith("/dev/"):
-            raise ConfigError(f"bus {bus_id} device must be under /dev")
-        if bus_type == "i2c":
-            name = device.rsplit("/", 1)[-1]
-            if not name.startswith("i2c-") or not name.removeprefix("i2c-").isdigit():
-                raise ConfigError(f"bus {bus_id} has an invalid I2C device")
-        if bus_type == "spi":
-            name = device.rsplit("/", 1)[-1]
-            if not name.startswith("spidev"):
-                raise ConfigError(f"bus {bus_id} has an invalid SPI device")
-            suffix = name.removeprefix("spidev")
-            if len(suffix.split(".")) != 2 or not all(
-                part.isdigit() for part in suffix.split(".")
-            ):
-                raise ConfigError(f"bus {bus_id} has an invalid SPI device")
-        parsed["device"] = device
-        parsed["timeout_ms"] = _integer(values, "timeout_ms", 100, 1, 60_000)
-        parsed["retries"] = _integer(values, "retries", 2, 0, 100)
-    if bus_type == "spi":
-        parsed["mode"] = _integer(values, "mode", 0, 0, 3)
-        parsed["max_speed_hz"] = _integer(
-            values, "max_speed_hz", 1_000_000, 1, 125_000_000
-        )
-    if bus_type == "uart":
-        parsed["baud_rate"] = _integer(values, "baud_rate", 9600, 1, 4_000_000)
-    return BusConfig(bus_id, cast(BusType, bus_type), parsed)
+    typed_bus = cast(BusType, bus_type)
+    if typed_bus == "mock":
+        return BusConfig(bus_id, typed_bus)
+    device_value = _string(values, "device")
+    if not device_value.startswith("/dev/"):
+        raise ConfigError(f"bus {bus_id} device must be under /dev")
+    device = Path(device_value)
+    if typed_bus == "i2c" and (
+        not device.name.startswith("i2c-")
+        or not device.name.removeprefix("i2c-").isdigit()
+    ):
+        raise ConfigError(f"bus {bus_id} has an invalid I2C device")
+    if typed_bus == "spi":
+        suffix = device.name.removeprefix("spidev")
+        if not device.name.startswith("spidev") or len(suffix.split(".")) != 2:
+            raise ConfigError(f"bus {bus_id} has an invalid SPI device")
+        if not all(part.isdigit() for part in suffix.split(".")):
+            raise ConfigError(f"bus {bus_id} has an invalid SPI device")
+    return BusConfig(
+        id=bus_id,
+        type=typed_bus,
+        device=device,
+        timeout_ms=_integer(values, "timeout_ms", 100, 1, 60_000),
+        retries=_integer(values, "retries", 2, 0, 100),
+        mode=_integer(values, "mode", 0, 0, 3) if typed_bus == "spi" else 0,
+        max_speed_hz=(
+            _integer(values, "max_speed_hz", 1_000_000, 1, 125_000_000)
+            if typed_bus == "spi"
+            else 1_000_000
+        ),
+        baud_rate=(
+            _integer(values, "baud_rate", 9600, 1, 4_000_000)
+            if typed_bus == "uart"
+            else 9600
+        ),
+    )
 
 
 def _load_sensor(raw: object) -> SensorConfig:
@@ -189,11 +220,11 @@ def _load_sensor(raw: object) -> SensorConfig:
 def _validate_collisions(config: AppConfig) -> None:
     ids: set[str] = set()
     i2c_addresses: set[tuple[str, int]] = set()
-    devices: dict[tuple[str, str], str] = {}
+    devices: dict[tuple[str, Path], str] = {}
     exclusive_buses: dict[str, str] = {}
     for bus in config.buses.values():
-        device = bus.values.get("device")
-        if isinstance(device, str) and bus.type in {"spi", "uart"}:
+        device = bus.device
+        if device is not None and bus.type in {"spi", "uart"}:
             device_key = (bus.type, device)
             if device_key in devices:
                 raise ConfigError(

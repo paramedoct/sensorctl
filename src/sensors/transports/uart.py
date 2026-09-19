@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from sensors.config import BusConfig
 from sensors.transports.base import Transport
@@ -8,9 +8,9 @@ from sensors.transports.base import Transport
 
 class UARTTransport(Transport):
     def __init__(self, config: BusConfig) -> None:
-        self._device = str(config.values["device"])
-        self._baud_rate = cast(int, config.values["baud_rate"])
-        self._timeout = cast(int, config.values["timeout_ms"]) / 1000
+        self._device = config.require_device()
+        self._baud_rate = config.baud_rate
+        self._timeout = config.timeout_ms / 1000
         self._serial: Any | None = None
 
     def open(self) -> None:
@@ -19,7 +19,7 @@ class UARTTransport(Transport):
         except ImportError as error:
             raise RuntimeError("UART requires the python3-serial package") from error
         self._serial = serial.Serial(
-            self._device, baudrate=self._baud_rate, timeout=self._timeout
+            str(self._device), baudrate=self._baud_rate, timeout=self._timeout
         )
 
     def read(self, size: int) -> bytes:

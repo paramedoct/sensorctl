@@ -7,7 +7,6 @@ import threading
 import time
 from pathlib import Path
 from types import FrameType
-from typing import cast
 
 from sensors.config import AppConfig
 from sensors.drivers.base import SensorDriver
@@ -76,7 +75,7 @@ class Collector:
                 stats,
                 self._stop_event,
                 boot_id,
-                cast(int, self._config.buses[bus_id].values.get("retries", 0)),
+                self._config.buses[bus_id].retries,
             )
             workers.append(worker)
         writer = DatabaseWriter(self._config, results, stored, stats, self._stop_event)

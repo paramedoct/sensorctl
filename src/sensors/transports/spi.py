@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from sensors.config import BusConfig
 from sensors.transports.base import Transport
@@ -8,9 +8,9 @@ from sensors.transports.base import Transport
 
 class SPITransport(Transport):
     def __init__(self, config: BusConfig) -> None:
-        self._device = str(config.values["device"])
-        self._mode = cast(int, config.values["mode"])
-        self._speed = cast(int, config.values["max_speed_hz"])
+        self._device = config.require_device()
+        self._mode = config.mode
+        self._speed = config.max_speed_hz
         self._spi: Any | None = None
 
     def open(self) -> None:
@@ -18,7 +18,7 @@ class SPITransport(Transport):
             import spidev  # type: ignore[import-not-found]
         except ImportError as error:
             raise RuntimeError("SPI requires the python3-spidev package") from error
-        name = self._device.rsplit("/", 1)[-1]
+        name = self._device.name
         bus, device = (int(part) for part in name.removeprefix("spidev").split("."))
         spi = spidev.SpiDev()
         spi.open(bus, device)

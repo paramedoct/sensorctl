@@ -42,6 +42,20 @@ class ConfigTest(unittest.TestCase):
         DriverRegistry().validate(config)
         self.assertEqual(config.sensors[0].interval_ms, 100)
         self.assertEqual(config.sensors[0].options["step"], 3)
+        self.assertEqual(config.buses["mock_main"].retries, 0)
+
+    def test_loads_typed_bus_values(self) -> None:
+        config = self.load(
+            VALID_CONFIG.replace(
+                '[buses.mock_main]\ntype = "mock"',
+                '[buses.mock_main]\ntype = "uart"\n'
+                'device = "/dev/ttyS0"\nbaud_rate = 115200\nretries = 4',
+            ).replace('driver = "mock"', 'driver = "unknown"')
+        )
+        bus = config.buses["mock_main"]
+        self.assertEqual(bus.device, Path("/dev/ttyS0"))
+        self.assertEqual(bus.baud_rate, 115200)
+        self.assertEqual(bus.retries, 4)
 
     def test_rejects_unknown_key(self) -> None:
         with self.assertRaisesRegex(ConfigError, "unknown sensor key"):

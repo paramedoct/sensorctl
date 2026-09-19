@@ -144,7 +144,7 @@ def _fingerprint(sensor: SensorConfig, bus: BusConfig) -> str:
         "bus": {
             "id": sensor.bus,
             "type": bus.type,
-            "values": dict(bus.values),
+            "values": bus.fingerprint_values(),
         },
         "driver": sensor.driver,
         "location": sensor.location,

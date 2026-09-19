@@ -79,7 +79,7 @@ def _diagnose(config_path: Path) -> int:
         if bus.type == "mock":
             print(f"bus {bus.id}: mock")
             continue
-        device = Path(str(bus.values["device"]))
+        device = bus.require_device()
         if device.exists():
             print(f"bus {bus.id}: ok ({device})")
         else:

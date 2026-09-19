@@ -8,7 +8,7 @@ from sensors.transports.base import Transport
 
 class I2CTransport(Transport):
     def __init__(self, config: BusConfig) -> None:
-        self._device = str(config.values["device"])
+        self._device = config.require_device()
         self._bus: Any | None = None
 
     def open(self) -> None:
@@ -16,7 +16,7 @@ class I2CTransport(Transport):
             from smbus2 import SMBus  # type: ignore[import-not-found]
         except ImportError as error:
             raise RuntimeError("I2C requires the python3-smbus2 package") from error
-        bus_number = int(self._device.rsplit("-", 1)[-1])
+        bus_number = int(self._device.name.removeprefix("i2c-"))
         self._bus = SMBus(bus_number)
 
     def transfer(self, address: int, write: bytes, read_length: int) -> bytes:

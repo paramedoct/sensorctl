@@ -14,7 +14,7 @@ from sensors.config import (
 )
 from sensors.drivers.registry import DriverRegistry
 from sensors.model import Sample
-from sensors.storage.database import Database
+from sensors.storage.database import Database, _fingerprint
 
 
 def make_config(path: Path, location: str = "test") -> AppConfig:
@@ -70,3 +70,29 @@ class DatabaseTest(unittest.TestCase):
         count = connection.execute("SELECT COUNT(*) FROM sensor_instance").fetchone()
         connection.close()
         self.assertEqual(count, (2,))
+
+    def test_fingerprint_remains_compatible_with_untyped_bus_values(self) -> None:
+        sensor = SensorConfig(
+            "example_counter",
+            "mock",
+            "mock_main",
+            1000,
+            "development",
+            True,
+            options={"start": 0.0, "step": 1.0},
+        )
+        self.assertEqual(
+            _fingerprint(sensor, BusConfig("mock_main", "mock")),
+            "714c6d1f58a64598b5646064428057ce43e688b879ed2ac59ab8fbcf4111be8a",
+        )
+
+        i2c_sensor = SensorConfig(
+            "sensor", "future", "i2c_main", 1000, "room", True, address=0x76
+        )
+        i2c_bus = BusConfig(
+            "i2c_main", "i2c", Path("/dev/i2c-1"), timeout_ms=100, retries=2
+        )
+        self.assertEqual(
+            _fingerprint(i2c_sensor, i2c_bus),
+            "f580b7a449eb664e076c16322aaeeb9d37c92243df7c043342923aa274963927",
+        )
