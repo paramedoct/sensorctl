@@ -8,7 +8,7 @@ status_interval_ms = 1000
 shutdown_timeout_s = 10
 
 [database]
-path = "/var/lib/sensors/sensors.db"
+path = "/var/lib/sensorctl/sensorctl.db"
 
 [buses.i2c_main]
 type = "i2c"

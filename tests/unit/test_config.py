@@ -12,7 +12,7 @@ VALID_CONFIG = """
 version = 1
 
 [database]
-path = "/tmp/sensors.db"
+path = "/tmp/sensorctl.db"
 
 [buses.mock_main]
 type = "mock"
@@ -44,6 +44,12 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.sensors[0].interval_ms, 100)
         self.assertEqual(config.sensors[0].options["step"], 3)
         self.assertEqual(config.buses["mock_main"].retries, 0)
+
+    def test_uses_sensorctl_default_database_path(self) -> None:
+        config = self.load(
+            VALID_CONFIG.replace('[database]\npath = "/tmp/sensorctl.db"\n\n', "")
+        )
+        self.assertEqual(config.database.path, Path("/var/lib/sensorctl/sensorctl.db"))
 
     def test_loads_bmp280_example(self) -> None:
         path = Path(__file__).parents[2] / "config" / "bmp280.example.toml"

@@ -14,8 +14,10 @@ from application import Collector
 from config import AppConfig, ConfigError, load_config
 from drivers.registry import DriverRegistry, PreparedDrivers
 
-DEFAULT_CONFIG = Path(os.environ.get("SENSORS_CONFIG", "/etc/sensors/sensors.toml"))
-DEFAULT_STATUS = Path("/run/sensors/status.json")
+DEFAULT_CONFIG = Path(
+    os.environ.get("SENSORCTL_CONFIG", "/etc/sensorctl/sensorctl.toml")
+)
+DEFAULT_STATUS = Path("/run/sensorctl/status.json")
 
 
 def _parser() -> argparse.ArgumentParser:

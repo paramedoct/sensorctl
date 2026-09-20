@@ -23,7 +23,7 @@ Install the required Debian packages:
 
 ```bash
 make
-sudo editor /etc/sensors/sensors.toml
+sudo editor /etc/sensorctl/sensorctl.toml
 sudo sensorctl validate
 sudo sensorctl enable
 ```
@@ -70,7 +70,7 @@ cannot be separated.
 
 ```bash
 sudo sensorctl stop
-sudo cp /var/lib/sensors/sensors.db /path/to/export/
+sudo cp /var/lib/sensorctl/sensorctl.db /path/to/export/
 sudo sensorctl start
 ```
 

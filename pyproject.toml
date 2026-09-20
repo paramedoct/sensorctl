@@ -3,12 +3,12 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rpi-sensors"
+name = "sensorctl"
 version = "0.1.0"
 description = "Configuration-driven sensor time-series collector"
 readme = "README.md"
 requires-python = ">=3.13"
-authors = [{ name = "sensors contributors" }]
+authors = [{ name = "sensorctl contributors" }]
 dependencies = [
     "pyserial>=3.5,<4",
     "smbus2>=0.5,<1",

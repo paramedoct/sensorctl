@@ -10,6 +10,10 @@ import commands
 
 
 class CommandsTest(unittest.TestCase):
+    def test_uses_sensorctl_default_paths(self) -> None:
+        self.assertEqual(commands.DEFAULT_CONFIG, Path("/etc/sensorctl/sensorctl.toml"))
+        self.assertEqual(commands.DEFAULT_STATUS, Path("/run/sensorctl/status.json"))
+
     def test_start_validates_before_service_change(self) -> None:
         config = Path("config.toml")
         with (

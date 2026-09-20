@@ -29,7 +29,7 @@ class Collector:
         self,
         config: AppConfig,
         prepared: PreparedDrivers,
-        status_path: Path = Path("/run/sensors/status.json"),
+        status_path: Path = Path("/run/sensorctl/status.json"),
     ) -> None:
         self._config = config
         self._prepared = prepared

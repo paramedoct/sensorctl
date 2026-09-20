@@ -50,7 +50,7 @@ class CollectorConfig:
 
 @dataclass(frozen=True)
 class DatabaseConfig:
-    path: Path = Path("/var/lib/sensors/sensors.db")
+    path: Path = Path("/var/lib/sensorctl/sensorctl.db")
 
 
 @dataclass(frozen=True)
@@ -271,7 +271,7 @@ def load_config(path: Path) -> AppConfig:
         raise ConfigError("version must be 1")
     database = _table(raw.get("database", {}), "database")
     _reject_unknown(database, _DATABASE_KEYS, "database")
-    database_path = database.get("path", "/var/lib/sensors/sensors.db")
+    database_path = database.get("path", "/var/lib/sensorctl/sensorctl.db")
     if not isinstance(database_path, str) or not database_path.startswith("/"):
         raise ConfigError("database path must be absolute")
     buses_raw = _table(raw.get("buses", {}), "buses")

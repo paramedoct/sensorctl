@@ -6,12 +6,12 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-ExecStart=/opt/sensors/venv/bin/sensorctl collect
+ExecStart=/opt/sensorctl/venv/bin/sensorctl collect
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=15
-RuntimeDirectory=sensors
-StateDirectory=sensors
+RuntimeDirectory=sensorctl
+StateDirectory=sensorctl
 User=root
 Group=root
 UMask=0027
@@ -25,7 +25,7 @@ ProtectKernelLogs=true
 ProtectKernelModules=true
 ProtectKernelTunables=true
 RestrictAddressFamilies=AF_UNIX
-ReadWritePaths=/var/lib/sensors /run/sensors
+ReadWritePaths=/var/lib/sensorctl /run/sensorctl
 
 [Install]
 WantedBy=multi-user.target
