@@ -9,6 +9,7 @@ import threading
 import time
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 
 from config import AppConfig, SensorConfig
@@ -27,9 +28,9 @@ class SensorStatus:
     missed_deadlines: int = 0
     dropped_samples: int = 0
     consecutive_failures: int = 0
-    backoff_until_ns: int = 0
-    last_read_ns: int | None = None
-    last_recorded_ns: int | None = None
+    backoff_until_ms: int = 0
+    last_read_at: str | None = None
+    last_recorded_at: str | None = None
     last_error: str | None = None
     pending: bool = False
 
@@ -38,8 +39,8 @@ class RuntimeStats:
     def __init__(self, sensor_ids: list[str]) -> None:
         self._lock = threading.Lock()
         self._sensors = {sensor_id: SensorStatus() for sensor_id in sensor_ids}
-        self.started_at_ns = time.time_ns()
-        self.last_commit_ns: int | None = None
+        self.started_at = _local_now()
+        self.last_commit_at: str | None = None
 
     def dispatch(self, sensor_id: str) -> bool:
         with self._lock:
@@ -50,30 +51,30 @@ class RuntimeStats:
             status.pending = True
             return True
 
-    def can_run(self, sensor_id: str, now_ns: int) -> bool:
+    def can_run(self, sensor_id: str, now_ms: int) -> bool:
         with self._lock:
-            return now_ns >= self._sensors[sensor_id].backoff_until_ns
+            return now_ms >= self._sensors[sensor_id].backoff_until_ms
 
-    def success(self, sensor_id: str, wall_time_ns: int) -> bool:
+    def success(self, sensor_id: str, read_at: str) -> bool:
         with self._lock:
             status = self._sensors[sensor_id]
             recovered = status.consecutive_failures > 0
             status.pending = False
             status.successful_reads += 1
             status.consecutive_failures = 0
-            status.backoff_until_ns = 0
-            status.last_read_ns = wall_time_ns
+            status.backoff_until_ms = 0
+            status.last_read_at = read_at
             status.last_error = None
             return recovered
 
-    def failure(self, sensor_id: str, error: Exception, now_ns: int) -> None:
+    def failure(self, sensor_id: str, error: Exception, now_ms: int) -> None:
         with self._lock:
             status = self._sensors[sensor_id]
             status.pending = False
             status.failed_reads += 1
             status.consecutive_failures += 1
             delay_seconds = min(60, 2 ** (status.consecutive_failures - 1))
-            status.backoff_until_ns = now_ns + delay_seconds * 1_000_000_000
+            status.backoff_until_ms = now_ms + delay_seconds * 1000
             status.last_error = f"{type(error).__name__}: {error}"
 
     def dropped(self, sensor_id: str) -> None:
@@ -85,18 +86,18 @@ class RuntimeStats:
             self._sensors[sensor_id].missed_deadlines += count
 
     def committed(self, samples: list[Sample]) -> None:
-        committed_at = time.time_ns()
+        committed_at = _local_now()
         with self._lock:
-            self.last_commit_ns = committed_at
+            self.last_commit_at = committed_at
             for sample in samples:
-                self._sensors[sample.sensor_id].last_recorded_ns = sample.wall_time_ns
+                self._sensors[sample.sensor_id].last_recorded_at = sample.time
 
     def snapshot(self, queue_size: int, queue_capacity: int) -> dict[str, object]:
         with self._lock:
             return {
-                "started_at_ns": self.started_at_ns,
-                "updated_at_ns": time.time_ns(),
-                "last_commit_ns": self.last_commit_ns,
+                "started_at": self.started_at,
+                "updated_at": _local_now(),
+                "last_commit_at": self.last_commit_at,
                 "queue": {"size": queue_size, "capacity": queue_capacity},
                 "sensors": {
                     sensor_id: asdict(status)
@@ -153,14 +154,14 @@ class BusWorker(threading.Thread):
                     if sensor.id not in initialized:
                         driver.initialize(self._transport)
                         initialized.add(sensor.id)
-                    wall_time_ns = 0
-                    monotonic_ns = 0
+                    read_at = ""
+                    monotonic_ms = 0
                     values: dict[str, float] | None = None
                     last_error: Exception | None = None
                     for _ in range(self._retries + 1):
                         try:
-                            wall_time_ns = time.time_ns()
-                            monotonic_ns = time.monotonic_ns()
+                            read_at = _local_now()
+                            monotonic_ms = time.monotonic_ns() // 1_000_000
                             values = dict(driver.read(self._transport))
                             break
                         except Exception as error:
@@ -175,8 +176,8 @@ class BusWorker(threading.Thread):
                         raise ValueError("driver returned a non-finite value")
                     sample = Sample(
                         sensor.id,
-                        wall_time_ns,
-                        monotonic_ns,
+                        read_at,
+                        monotonic_ms,
                         self._boot_id,
                         values,
                     )
@@ -184,11 +185,13 @@ class BusWorker(threading.Thread):
                         self._results.put_nowait(sample)
                     except queue.Full:
                         self._stats.dropped(sensor.id)
-                    if self._stats.success(sensor.id, wall_time_ns):
+                    if self._stats.success(sensor.id, read_at):
                         LOGGER.info("sensor %s recovered", sensor.id)
                 except Exception as error:
                     initialized.discard(sensor.id)
-                    self._stats.failure(sensor.id, error, time.monotonic_ns())
+                    self._stats.failure(
+                        sensor.id, error, time.monotonic_ns() // 1_000_000
+                    )
                     now = time.monotonic()
                     if now - self._last_warning.get(sensor.id, 0.0) >= 60:
                         LOGGER.warning("sensor %s read failed: %s", sensor.id, error)
@@ -289,3 +292,7 @@ class StatusWriter(threading.Thread):
         temporary = self._path.with_suffix(".tmp")
         temporary.write_text(json.dumps(payload, sort_keys=True) + "\n")
         os.replace(temporary, self._path)
+
+
+def _local_now() -> str:
+    return datetime.now().isoformat(sep=" ", timespec="milliseconds")

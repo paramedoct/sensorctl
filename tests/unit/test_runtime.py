@@ -14,10 +14,10 @@ class RuntimeStatsTest(unittest.TestCase):
 
     def test_failure_uses_exponential_backoff(self) -> None:
         stats = RuntimeStats(["sensor"])
-        stats.failure("sensor", RuntimeError("first"), 1_000_000_000)
-        self.assertEqual(self.status(stats)["backoff_until_ns"], 2_000_000_000)
-        stats.failure("sensor", RuntimeError("second"), 2_000_000_000)
-        self.assertEqual(self.status(stats)["backoff_until_ns"], 4_000_000_000)
+        stats.failure("sensor", RuntimeError("first"), 1000)
+        self.assertEqual(self.status(stats)["backoff_until_ms"], 2000)
+        stats.failure("sensor", RuntimeError("second"), 2000)
+        self.assertEqual(self.status(stats)["backoff_until_ms"], 4000)
 
     def test_pending_read_counts_as_missed(self) -> None:
         stats = RuntimeStats(["sensor"])
@@ -28,5 +28,5 @@ class RuntimeStatsTest(unittest.TestCase):
     def test_success_reports_recovery(self) -> None:
         stats = RuntimeStats(["sensor"])
         stats.failure("sensor", RuntimeError("failure"), 1)
-        self.assertTrue(stats.success("sensor", 2))
-        self.assertFalse(stats.success("sensor", 3))
+        self.assertTrue(stats.success("sensor", "2026-09-20 00:00:00.002"))
+        self.assertFalse(stats.success("sensor", "2026-09-20 00:00:00.003"))

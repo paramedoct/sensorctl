@@ -88,11 +88,13 @@ class Collector:
         status_writer.start()
         for worker in workers:
             worker.start()
-        intervals = {sensor.id: sensor.interval_ms * 1_000_000 for sensor in enabled}
-        deadlines = {sensor.id: time.monotonic_ns() for sensor in enabled}
+        intervals = {sensor.id: sensor.interval_ms for sensor in enabled}
+        deadlines = {
+            sensor.id: time.monotonic_ns() // 1_000_000 for sensor in enabled
+        }
         try:
             while not self._stop_event.is_set():
-                now = time.monotonic_ns()
+                now = time.monotonic_ns() // 1_000_000
                 for sensor in enabled:
                     deadline = deadlines[sensor.id]
                     if now < deadline:
@@ -117,7 +119,13 @@ class Collector:
                     raise RuntimeError("bus worker stopped") from worker_error
                 nearest = min(deadlines.values())
                 self._stop_event.wait(
-                    min(0.1, max(0.0, (nearest - time.monotonic_ns()) / 1_000_000_000))
+                    min(
+                        0.1,
+                        max(
+                            0.0,
+                            (nearest - time.monotonic_ns() // 1_000_000) / 1000,
+                        ),
+                    )
                 )
         finally:
             self._stop_event.set()

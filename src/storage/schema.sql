@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 
 INSERT INTO schema_version (version)
-SELECT 1
+SELECT 2
 WHERE NOT EXISTS (SELECT 1 FROM schema_version);
 
 CREATE TABLE IF NOT EXISTS sensor_instance (
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS sensor_instance (
     bus_id TEXT NOT NULL,
     location TEXT NOT NULL,
     config_fingerprint TEXT NOT NULL,
-    created_at_ns INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
     UNIQUE (logical_id, config_fingerprint)
 );
 
@@ -30,13 +30,13 @@ CREATE TABLE IF NOT EXISTS field (
 CREATE TABLE IF NOT EXISTS sample (
     id INTEGER PRIMARY KEY,
     sensor_instance_id INTEGER NOT NULL REFERENCES sensor_instance(id),
-    wall_time_ns INTEGER NOT NULL,
-    monotonic_ns INTEGER NOT NULL,
+    time TEXT NOT NULL,
+    monotonic_ms INTEGER NOT NULL,
     boot_id TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS sample_sensor_time_idx
-ON sample (sensor_instance_id, wall_time_ns);
+ON sample (sensor_instance_id, time);
 
 CREATE TABLE IF NOT EXISTS measurement (
     sample_id INTEGER NOT NULL REFERENCES sample(id) ON DELETE CASCADE,

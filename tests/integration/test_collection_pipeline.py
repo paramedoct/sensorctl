@@ -53,4 +53,4 @@ class CollectionPipelineTest(unittest.TestCase):
             self.assertEqual(values[:3], [5.0, 7.0, 9.0])
             status = json.loads(status_path.read_text())
             self.assertGreaterEqual(status["sensors"]["counter"]["successful_reads"], 5)
-            self.assertIsNotNone(status["last_commit_ns"])
+            self.assertIsNotNone(status["last_commit_at"])

@@ -13,8 +13,8 @@ class FieldDefinition:
 @dataclass(frozen=True)
 class Sample:
     sensor_id: str
-    wall_time_ns: int
-    monotonic_ns: int
+    time: str
+    monotonic_ms: int
     boot_id: str
     values: Mapping[str, float]
 

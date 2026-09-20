@@ -79,7 +79,7 @@ def _status(config_path: Path, status_path: Path) -> int:
         f"queue: {queue_status.get('size', 'unknown')}/"
         f"{queue_status.get('capacity', 'unknown')}"
     )
-    print(f"last_commit_ns: {payload.get('last_commit_ns')}")
+    print(f"last_commit_at: {payload.get('last_commit_at')}")
     for sensor_id, status in sorted(payload.get("sensors", {}).items()):
         print(
             f"sensor {sensor_id}: reads={status.get('successful_reads', 0)} "
