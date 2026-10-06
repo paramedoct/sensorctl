@@ -13,6 +13,8 @@ dependencies = [
     "pyserial>=3.5,<4",
     "smbus2>=0.5,<1",
     "spidev>=3.6,<4",
+    "alembic>=1.14,<2",
+    "sqlalchemy>=2,<3",
 ]
 
 [project.optional-dependencies]
@@ -32,7 +34,7 @@ where = ["src"]
 include = ["sensorctl*"]
 
 [tool.setuptools.package-data]
-"sensorctl.storage" = ["schema.sql"]
+"sensorctl.storage.migrations" = ["script.py.mako"]
 
 [tool.ruff]
 target-version = "py313"

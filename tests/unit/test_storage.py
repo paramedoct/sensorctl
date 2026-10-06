@@ -8,7 +8,8 @@ from pathlib import Path
 from sensorctl.config import BusConfig, SensorConfig
 from sensorctl.hw.drivers.registry import DriverRegistry
 from sensorctl.model import Sample
-from sensorctl.storage.database import Database, _fingerprint
+from sensorctl.storage.database import Database
+from sensorctl.storage.repositories.sensors import _fingerprint
 from tests.support import make_mock_config
 
 
@@ -130,19 +131,65 @@ class DatabaseTest(unittest.TestCase):
             pass
 
         connection = sqlite3.connect(self.path)
-        version = connection.execute("SELECT version FROM schema_version").fetchone()
+        version = connection.execute(
+            "SELECT version_num FROM alembic_version"
+        ).fetchone()
         sample = connection.execute("SELECT time, monotonic_ms FROM sample").fetchone()
         types = {
             row[1]: row[2]
             for row in connection.execute("PRAGMA table_info(sample)").fetchall()
         }
         connection.close()
-        self.assertEqual(version, (2,))
+        self.assertEqual(version, ("0002",))
         self.assertIsNotNone(sample)
         assert sample is not None
         self.assertRegex(sample[0], r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:01\.234$")
         self.assertEqual(sample[1], 5678)
         self.assertEqual(types["time"], "TEXT")
+        foreign_key_connection = sqlite3.connect(self.path)
+        self.assertEqual(
+            foreign_key_connection.execute("PRAGMA foreign_key_check").fetchall(), []
+        )
+        foreign_key_connection.close()
+
+    def test_stamps_existing_v2_database(self) -> None:
+        fixture = Path(__file__).parents[1] / "fixtures/database/legacy_v2.sql"
+        connection = sqlite3.connect(self.path)
+        try:
+            connection.executescript(fixture.read_text())
+        finally:
+            connection.close()
+        with Database(self.path):
+            pass
+        connection = sqlite3.connect(self.path)
+        try:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT version_num FROM alembic_version"
+                ).fetchone(),
+                ("0002",),
+            )
+            self.assertIsNone(
+                connection.execute(
+                    "SELECT name FROM sqlite_master WHERE name = 'schema_version'"
+                ).fetchone()
+            )
+        finally:
+            connection.close()
+
+    def test_new_database_runs_migrations(self) -> None:
+        with Database(self.path):
+            pass
+        connection = sqlite3.connect(self.path)
+        try:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT version_num FROM alembic_version"
+                ).fetchone(),
+                ("0002",),
+            )
+        finally:
+            connection.close()
 
     def test_context_manager_closes_connection(self) -> None:
         database = Database(self.path)

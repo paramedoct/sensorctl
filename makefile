@@ -33,8 +33,8 @@ all:
 	  echo "python3-venv is required" >&2
 	  exit 1
 	fi
-	if ! python3 -c 'import setuptools' >/dev/null 2>&1; then
-	  echo "python3-setuptools is required" >&2
+	if ! python3 -c 'import setuptools, alembic, sqlalchemy' >/dev/null 2>&1; then
+	  echo "python3-setuptools, python3-alembic, and python3-sqlalchemy are required" >&2
 	  exit 1
 	fi
 	was_active=false

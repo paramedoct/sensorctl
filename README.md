@@ -50,7 +50,7 @@ sensorctl enable
 sensorctl disable
 ```
 
-Configuration changes take effect after validation and restart.
+Configuration changes take effect after validation and restart. Database schema migrations run automatically before collection starts. Install Debian packages with `./3rdparty/setup-debian.sh` before installing the project in development mode; this provides the hardware drivers and Alembic dependencies used by the offline installer.
 
 On shutdown, collection stops scheduling reads, waits for bus workers, closes
 sample admission, and drains the database writer before recording final status.

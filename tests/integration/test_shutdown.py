@@ -37,11 +37,14 @@ class ShutdownTest(unittest.TestCase):
             self.assertEqual(status["shutdown"]["uncommitted_samples"], 0)
             self.assertEqual(status["accepted_samples"], 1)
             self.assertEqual(status["committed_samples"], 1)
-            with sqlite3.connect(root / "db") as database:
+            database = sqlite3.connect(root / "db")
+            try:
                 self.assertEqual(
                     database.execute("SELECT value FROM measurement").fetchall(),
                     [(7.0,)],
                 )
+            finally:
+                database.close()
 
     def test_blocked_read_fails_shutdown_and_cannot_submit_late_sample(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -92,10 +95,13 @@ class ShutdownTest(unittest.TestCase):
                         if thread.name == "database-writer":
                             thread.join(2)
             self.assertTrue(queues[0].empty())
-            with sqlite3.connect(root / "db") as database:
+            database = sqlite3.connect(root / "db")
+            try:
                 self.assertEqual(
                     database.execute("SELECT COUNT(*) FROM sample").fetchone(), (0,)
                 )
+            finally:
+                database.close()
 
     def test_blocked_commit_is_reported_as_uncommitted(self) -> None:
         self._check_storage_failure(block=True)
