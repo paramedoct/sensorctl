@@ -45,7 +45,10 @@ class Collector:
         if not enabled:
             raise RuntimeError("at least one enabled sensor is required")
         with Database(self._config.database.path) as database:
-            stored = database.register_sensors(self._config, drivers)
+            stored = database.register_sensors(
+                self._config,
+                {sensor_id: driver.fields for sensor_id, driver in drivers.items()},
+            )
         boot_id = _read_boot_id()
         stats = RuntimeStats([sensor.id for sensor in enabled])
         results = SampleQueue(self._config.collector.queue_size, stats)

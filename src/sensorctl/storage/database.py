@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import hashlib
-import json
 import sqlite3
-from collections.abc import Mapping
-from datetime import datetime
+from collections.abc import Mapping, Sequence
 from importlib.resources import files
 from pathlib import Path
 from types import TracebackType
 from typing import Self
 
-from sensorctl.config import AppConfig, BusConfig, SensorConfig
-from sensorctl.hw.drivers.base import SensorDriver
-from sensorctl.model import Sample, StoredSensor
+from sensorctl.config import AppConfig
+from sensorctl.model import FieldDefinition, Sample, StoredSensor
+from sensorctl.storage.connection import connect
+from sensorctl.storage.repositories import register_sensors, write_samples
+from sensorctl.storage.repositories.sensors import _fingerprint as _fingerprint
 
 
 class Database:
@@ -34,11 +33,7 @@ class Database:
         self.close(checkpoint=exception_type is None)
 
     def open(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        connection = sqlite3.connect(self.path, timeout=10)
-        connection.execute("PRAGMA journal_mode = WAL")
-        connection.execute("PRAGMA synchronous = NORMAL")
-        connection.execute("PRAGMA foreign_keys = ON")
+        connection = connect(self.path)
         try:
             _prepare_schema(connection)
         except Exception:
@@ -57,115 +52,23 @@ class Database:
     def register_sensors(
         self,
         config: AppConfig,
-        drivers: Mapping[str, SensorDriver],
+        fields_by_sensor: Mapping[str, Sequence[FieldDefinition]],
     ) -> dict[str, StoredSensor]:
         connection = self._require_connection()
-        stored: dict[str, StoredSensor] = {}
-        for sensor in config.sensors:
-            if not sensor.enabled:
-                continue
-            fingerprint = _fingerprint(sensor, config.buses[sensor.bus])
-            row = connection.execute(
-                """
-                SELECT id FROM sensor_instance
-                WHERE logical_id = ? AND config_fingerprint = ?
-                """,
-                (sensor.id, fingerprint),
-            ).fetchone()
-            if row is None:
-                cursor = connection.execute(
-                    """
-                    INSERT INTO sensor_instance
-                        (logical_id, driver, bus_id, location,
-                         config_fingerprint, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        sensor.id,
-                        sensor.driver,
-                        sensor.bus,
-                        sensor.location,
-                        fingerprint,
-                        _local_now(),
-                    ),
-                )
-                if cursor.lastrowid is None:
-                    raise RuntimeError("database did not return a sensor instance id")
-                instance_id = cursor.lastrowid
-                for definition in drivers[sensor.id].fields:
-                    connection.execute(
-                        """
-                        INSERT INTO field (sensor_instance_id, name, unit)
-                        VALUES (?, ?, ?)
-                        """,
-                        (instance_id, definition.name, definition.unit),
-                    )
-            else:
-                instance_id = int(row[0])
-            field_rows = connection.execute(
-                "SELECT id, name FROM field WHERE sensor_instance_id = ?",
-                (instance_id,),
-            ).fetchall()
-            stored[sensor.id] = StoredSensor(
-                instance_id, {str(name): int(field_id) for field_id, name in field_rows}
-            )
-        connection.commit()
-        return stored
+        with connection:
+            return register_sensors(connection, config, fields_by_sensor)
 
     def write_samples(
         self, samples: list[Sample], stored: Mapping[str, StoredSensor]
     ) -> None:
         connection = self._require_connection()
         with connection:
-            for sample in samples:
-                sensor = stored[sample.sensor_id]
-                cursor = connection.execute(
-                    """
-                    INSERT INTO sample
-                        (sensor_instance_id, time, monotonic_ms, boot_id)
-                    VALUES (?, ?, ?, ?)
-                    """,
-                    (
-                        sensor.instance_id,
-                        sample.time,
-                        sample.monotonic_ms,
-                        sample.boot_id,
-                    ),
-                )
-                if cursor.lastrowid is None:
-                    raise RuntimeError("database did not return a sample id")
-                sample_id = cursor.lastrowid
-                connection.executemany(
-                    """
-                    INSERT INTO measurement (sample_id, field_id, value)
-                    VALUES (?, ?, ?)
-                    """,
-                    [
-                        (sample_id, sensor.fields[name], value)
-                        for name, value in sample.values.items()
-                    ],
-                )
+            write_samples(connection, samples, stored)
 
     def _require_connection(self) -> sqlite3.Connection:
         if self._connection is None:
             raise RuntimeError("database is not open")
         return self._connection
-
-
-def _fingerprint(sensor: SensorConfig, bus: BusConfig) -> str:
-    payload = {
-        "address": sensor.address,
-        "bus": {
-            "id": sensor.bus,
-            "type": bus.type,
-            "values": bus.fingerprint_values(),
-        },
-        "driver": sensor.driver,
-        "location": sensor.location,
-        "options": dict(sensor.options),
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.sha256(encoded).hexdigest()
 
 
 def _prepare_schema(connection: sqlite3.Connection) -> None:
@@ -290,7 +193,3 @@ def _migrate_v1(connection: sqlite3.Connection) -> None:
         raise
     finally:
         connection.execute("PRAGMA foreign_keys = ON")
-
-
-def _local_now() -> str:
-    return datetime.now().isoformat(sep=" ", timespec="milliseconds")

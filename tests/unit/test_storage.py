@@ -22,7 +22,13 @@ class DatabaseTest(unittest.TestCase):
         config = make_mock_config(self.path)
         with Database(self.path) as database:
             stored = database.register_sensors(
-                config, DriverRegistry().prepare(config).by_sensor_id
+                config,
+                {
+                    key: driver.fields
+                    for key, driver in DriverRegistry()
+                    .prepare(config)
+                    .by_sensor_id.items()
+                },
             )
             database.write_samples(
                 [
@@ -51,10 +57,22 @@ class DatabaseTest(unittest.TestCase):
         second = make_mock_config(self.path, location="other")
         with Database(self.path) as database:
             database.register_sensors(
-                first, DriverRegistry().prepare(first).by_sensor_id
+                first,
+                {
+                    key: driver.fields
+                    for key, driver in DriverRegistry()
+                    .prepare(first)
+                    .by_sensor_id.items()
+                },
             )
             database.register_sensors(
-                second, DriverRegistry().prepare(second).by_sensor_id
+                second,
+                {
+                    key: driver.fields
+                    for key, driver in DriverRegistry()
+                    .prepare(second)
+                    .by_sensor_id.items()
+                },
             )
         connection = sqlite3.connect(self.path)
         count = connection.execute("SELECT COUNT(*) FROM sensor_instance").fetchone()
@@ -134,7 +152,12 @@ class DatabaseTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "database is not open"):
             database.register_sensors(
                 config,
-                DriverRegistry().prepare(config).by_sensor_id,
+                {
+                    key: driver.fields
+                    for key, driver in DriverRegistry()
+                    .prepare(config)
+                    .by_sensor_id.items()
+                },
             )
 
     def test_fingerprint_remains_compatible_with_untyped_bus_values(self) -> None:
