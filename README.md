@@ -52,6 +52,19 @@ sensorctl disable
 
 Configuration changes take effect after validation and restart. Database schema migrations run automatically before collection starts. Install Debian packages with `./3rdparty/setup-debian.sh` before installing the project in development mode; this provides the hardware drivers and Alembic dependencies used by the offline installer.
 
+## Source layout
+
+Application code lives in the `src/sensorctl` package. Commands and collection
+lifecycle are at the package root; hardware drivers and transports live under
+`hw`, execution threads and queues under `runtime`, and database connections,
+repositories, schema metadata, and Alembic revisions under `storage`.
+
+New database changes belong in a new file under
+`src/sensorctl/storage/migrations/versions`. Treat published revisions as
+immutable. Add a revision after the current head, then verify it against a new
+database and the supported legacy database fixtures before release. The
+timestamp conversion cannot be downgraded safely.
+
 On shutdown, collection stops scheduling reads, waits for bus workers, closes
 sample admission, and drains the database writer before recording final status.
 The configured shutdown timeout covers worker and writer waits together.
@@ -94,12 +107,13 @@ sudo sensorctl start
 ## Development
 
 ```bash
-python3 -m pip install -e ".[dev]"
+python3 -m venv --system-site-packages .venv
+.venv/bin/python -m pip install -e ".[dev]"
 python3 -m unittest discover -s tests
 ruff check .
 ruff format --check .
 mypy --strict .
-python3 -m sensorctl --help
+.venv/bin/python -m sensorctl --help
 make --dry-run
 make --dry-run clean
 ```
