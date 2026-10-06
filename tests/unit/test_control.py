@@ -4,32 +4,32 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-import sensorctl.control as control
+import sensorctl.service as service
 
 
 class ControlTest(unittest.TestCase):
-    @patch("sensorctl.control.os.geteuid", return_value=0)
+    @patch("sensorctl.service.os.geteuid", return_value=0)
     def test_enable_starts_service(self, _geteuid: object) -> None:
         completed = subprocess.CompletedProcess[object]([], 0)
         with patch(
-            "sensorctl.control.subprocess.run", return_value=completed
+            "sensorctl.service.subprocess.run", return_value=completed
         ) as runner:
-            self.assertEqual(control.enable(), 0)
+            self.assertEqual(service.enable(), 0)
         runner.assert_called_once_with(
             ["systemctl", "enable", "--now", "sensorctl.service"], check=False
         )
 
-    @patch("sensorctl.control.os.geteuid", return_value=1000)
+    @patch("sensorctl.service.os.geteuid", return_value=1000)
     def test_start_requires_root(self, _geteuid: object) -> None:
         with self.assertRaisesRegex(PermissionError, "must run as root"):
-            control.start()
+            service.start()
 
     def test_status_does_not_require_root(self) -> None:
         completed = subprocess.CompletedProcess[object]([], 3)
         with patch(
-            "sensorctl.control.subprocess.run", return_value=completed
+            "sensorctl.service.subprocess.run", return_value=completed
         ) as runner:
-            control.show_status()
+            service.show_status()
         runner.assert_called_once_with(
             [
                 "systemctl",
@@ -41,8 +41,8 @@ class ControlTest(unittest.TestCase):
             check=False,
         )
 
-    @patch("sensorctl.control.shutil.which", return_value=None)
+    @patch("sensorctl.service.shutil.which", return_value=None)
     def test_journal_is_optional(self, _which: object) -> None:
-        with patch("sensorctl.control.subprocess.run") as runner:
-            control.show_journal()
+        with patch("sensorctl.service.subprocess.run") as runner:
+            service.show_journal()
         runner.assert_not_called()

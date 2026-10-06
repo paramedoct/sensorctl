@@ -9,7 +9,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-import sensorctl.control as control
+import sensorctl.service as service
 from sensorctl.collector import Collector
 from sensorctl.config import AppConfig, ConfigError, load_config
 from sensorctl.hw.drivers.registry import DriverRegistry, PreparedDrivers
@@ -124,24 +124,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _validate(arguments.config)
         if arguments.command == "enable":
             _validate(arguments.config)
-            return control.enable()
+            return service.enable()
         if arguments.command == "start":
             _validate(arguments.config)
-            return control.start()
+            return service.start()
         if arguments.command == "restart":
             _validate(arguments.config)
-            return control.restart()
+            return service.restart()
         if arguments.command == "disable":
-            return control.disable()
+            return service.disable()
         if arguments.command == "stop":
-            return control.stop()
+            return service.stop()
         if arguments.command == "status":
-            control.show_status()
+            service.show_status()
             return _status(arguments.config, arguments.status_path)
         if arguments.command == "diagnose":
             result = _diagnose(arguments.config)
             if result == 0:
-                control.show_journal()
+                service.show_journal()
             return result
         config, prepared = _prepare_config(arguments.config)
         Collector(config, prepared, arguments.status_path).run()

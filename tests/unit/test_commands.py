@@ -18,7 +18,7 @@ class CommandsTest(unittest.TestCase):
         config = Path("config.toml")
         with (
             patch("sensorctl.commands._validate", return_value=0) as validate,
-            patch("sensorctl.commands.control.start", return_value=0) as start,
+            patch("sensorctl.commands.service.start", return_value=0) as start,
         ):
             result = commands.main(["start", "--config", str(config)])
         self.assertEqual(result, 0)
@@ -28,7 +28,7 @@ class CommandsTest(unittest.TestCase):
     def test_validation_failure_prevents_service_change(self) -> None:
         with (
             patch("sensorctl.commands._validate", side_effect=RuntimeError("invalid")),
-            patch("sensorctl.commands.control.restart") as restart,
+            patch("sensorctl.commands.service.restart") as restart,
             contextlib.redirect_stderr(io.StringIO()),
         ):
             result = commands.main(["restart"])
@@ -37,7 +37,7 @@ class CommandsTest(unittest.TestCase):
 
     def test_status_combines_service_and_collector_status(self) -> None:
         with (
-            patch("sensorctl.commands.control.show_status") as service_status,
+            patch("sensorctl.commands.service.show_status") as service_status,
             patch("sensorctl.commands._status", return_value=0) as collector_status,
         ):
             result = commands.main(["status"])
@@ -50,7 +50,7 @@ class CommandsTest(unittest.TestCase):
     def test_failed_diagnosis_skips_journal(self) -> None:
         with (
             patch("sensorctl.commands._diagnose", return_value=1),
-            patch("sensorctl.commands.control.show_journal") as journal,
+            patch("sensorctl.commands.service.show_journal") as journal,
         ):
             result = commands.main(["diagnose"])
         self.assertEqual(result, 1)

@@ -130,7 +130,9 @@ class ShutdownTest(unittest.TestCase):
                 patch.object(
                     prepared.by_sensor_id["counter"], "read", side_effect=read
                 ),
-                patch("sensorctl.runtime.Database.write_samples", side_effect=write),
+                patch(
+                    "sensorctl.runtime.writer.Database.write_samples", side_effect=write
+                ),
                 self.assertLogs(level="ERROR"),
             ):
                 try:
