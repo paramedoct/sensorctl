@@ -170,7 +170,8 @@ def _fingerprint(sensor: SensorConfig, bus: BusConfig) -> str:
 
 def _prepare_schema(connection: sqlite3.Connection) -> None:
     row = connection.execute(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'schema_version'"
+        "SELECT name FROM sqlite_master "
+        "WHERE type = 'table' AND name = 'schema_version'"
     ).fetchone()
     if row is not None:
         version = connection.execute("SELECT version FROM schema_version").fetchone()

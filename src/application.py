@@ -10,12 +10,12 @@ from types import FrameType
 
 from config import AppConfig
 from drivers.registry import PreparedDrivers
-from model import Sample
 from runtime import (
     BusWorker,
     DatabaseWriter,
     ReadTask,
     RuntimeStats,
+    SampleQueue,
     StatusWriter,
 )
 from storage.database import Database
@@ -48,9 +48,7 @@ class Collector:
             stored = database.register_sensors(self._config, drivers)
         boot_id = _read_boot_id()
         stats = RuntimeStats([sensor.id for sensor in enabled])
-        results: queue.Queue[Sample | None] = queue.Queue(
-            self._config.collector.queue_size
-        )
+        results = SampleQueue(self._config.collector.queue_size, stats)
         bus_tasks: dict[str, queue.Queue[ReadTask | None]] = {
             bus_id: queue.Queue() for bus_id in {sensor.bus for sensor in enabled}
         }
@@ -134,22 +132,32 @@ class Collector:
             )
             for worker in workers:
                 worker.join(_remaining(shutdown_deadline))
-            if writer.is_alive():
-                try:
-                    results.put(None, timeout=_remaining(shutdown_deadline))
-                except queue.Full:
-                    LOGGER.error("result queue did not drain before shutdown deadline")
+            results.close()
             writer.join(_remaining(shutdown_deadline))
             status_writer.join(_remaining(shutdown_deadline))
-            if status_writer.is_alive():
-                raise RuntimeError(
-                    "status writer did not stop before shutdown deadline"
-                )
-            if status_writer.error is not None:
-                raise RuntimeError("status writer failed") from status_writer.error
-            status_writer.write()
-        if writer.error is not None:
-            raise RuntimeError("database writer failed") from writer.error
+            threads: list[BusWorker | DatabaseWriter | StatusWriter] = [
+                *workers,
+                writer,
+                status_writer,
+            ]
+            alive = [thread.name for thread in threads if thread.is_alive()]
+            errors = [
+                f"{thread.name}: {thread.error}"
+                for thread in threads
+                if thread.error is not None
+            ]
+            if alive:
+                errors.append("shutdown deadline exceeded: " + ", ".join(alive))
+            stats.shutdown(alive, errors)
+            if not status_writer.is_alive():
+                try:
+                    status_writer.write()
+                except Exception as error:
+                    errors.append(f"final status write failed: {error}")
+            if errors:
+                message = "; ".join(errors)
+                LOGGER.error("collector shutdown failed: %s", message)
+                raise RuntimeError(message)
 
     def _install_signal_handlers(self) -> None:
         def handle_signal(signum: int, frame: FrameType | None) -> None:

@@ -113,9 +113,7 @@ class DatabaseTest(unittest.TestCase):
 
         connection = sqlite3.connect(self.path)
         version = connection.execute("SELECT version FROM schema_version").fetchone()
-        sample = connection.execute(
-            "SELECT time, monotonic_ms FROM sample"
-        ).fetchone()
+        sample = connection.execute("SELECT time, monotonic_ms FROM sample").fetchone()
         types = {
             row[1]: row[2]
             for row in connection.execute("PRAGMA table_info(sample)").fetchall()
@@ -124,9 +122,7 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(version, (2,))
         self.assertIsNotNone(sample)
         assert sample is not None
-        self.assertRegex(
-            sample[0], r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:01\.234$"
-        )
+        self.assertRegex(sample[0], r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:01\.234$")
         self.assertEqual(sample[1], 5678)
         self.assertEqual(types["time"], "TEXT")
 

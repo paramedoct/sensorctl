@@ -41,6 +41,23 @@ class RuntimeStats:
         self._sensors = {sensor_id: SensorStatus() for sensor_id in sensor_ids}
         self.started_at = _local_now()
         self.last_commit_at: str | None = None
+        self._accepted = 0
+        self._committed = 0
+        self._shutdown: dict[str, object] | None = None
+
+    def accepted(self) -> None:
+        with self._lock:
+            self._accepted += 1
+
+    def shutdown(self, alive: list[str], errors: list[str]) -> None:
+        with self._lock:
+            self._shutdown = {
+                "complete": not alive and not errors,
+                "alive_threads": alive,
+                "errors": list(errors),
+                "pending_tasks": sum(s.pending for s in self._sensors.values()),
+                "uncommitted_samples": self._accepted - self._committed,
+            }
 
     def dispatch(self, sensor_id: str) -> bool:
         with self._lock:
@@ -89,6 +106,7 @@ class RuntimeStats:
         committed_at = _local_now()
         with self._lock:
             self.last_commit_at = committed_at
+            self._committed += len(samples)
             for sample in samples:
                 self._sensors[sample.sensor_id].last_recorded_at = sample.time
 
@@ -98,6 +116,9 @@ class RuntimeStats:
                 "started_at": self.started_at,
                 "updated_at": _local_now(),
                 "last_commit_at": self.last_commit_at,
+                "accepted_samples": self._accepted,
+                "committed_samples": self._committed,
+                "shutdown": self._shutdown,
                 "queue": {"size": queue_size, "capacity": queue_capacity},
                 "sensors": {
                     sensor_id: asdict(status)
@@ -111,6 +132,35 @@ class ReadTask:
     sensor: SensorConfig
 
 
+class SampleQueue(queue.Queue[Sample | None]):
+    """Close producer admission without needing space for a sentinel."""
+
+    def __init__(self, capacity: int, stats: RuntimeStats) -> None:
+        super().__init__(capacity)
+        self._admission_lock = threading.Lock()
+        self._closed = threading.Event()
+        self._stats = stats
+
+    def submit(self, sample: Sample) -> None:
+        with self._admission_lock:
+            if self._closed.is_set():
+                self._stats.dropped(sample.sensor_id)
+                return
+            try:
+                self.put_nowait(sample)
+            except queue.Full:
+                self._stats.dropped(sample.sensor_id)
+            else:
+                self._stats.accepted()
+
+    def close(self) -> None:
+        with self._admission_lock:
+            self._closed.set()
+
+    def drained(self) -> bool:
+        return self._closed.is_set() and self.empty()
+
+
 class BusWorker(threading.Thread):
     def __init__(
         self,
@@ -118,7 +168,7 @@ class BusWorker(threading.Thread):
         transport: Transport,
         drivers: Mapping[str, SensorDriver],
         tasks: queue.Queue[ReadTask | None],
-        results: queue.Queue[Sample | None],
+        results: SampleQueue,
         stats: RuntimeStats,
         stop_event: threading.Event,
         boot_id: str,
@@ -166,6 +216,8 @@ class BusWorker(threading.Thread):
                             break
                         except Exception as error:
                             last_error = error
+                            if self._stop_event.is_set():
+                                break
                     if values is None:
                         assert last_error is not None
                         raise last_error
@@ -181,10 +233,7 @@ class BusWorker(threading.Thread):
                         self._boot_id,
                         values,
                     )
-                    try:
-                        self._results.put_nowait(sample)
-                    except queue.Full:
-                        self._stats.dropped(sensor.id)
+                    self._results.submit(sample)
                     if self._stats.success(sensor.id, read_at):
                         LOGGER.info("sensor %s recovered", sensor.id)
                 except Exception as error:
@@ -203,15 +252,23 @@ class BusWorker(threading.Thread):
             LOGGER.exception("bus worker failed")
         finally:
             for driver in self._drivers.values():
-                driver.close()
-            self._transport.close()
+                try:
+                    driver.close()
+                except Exception as error:
+                    self.error = error
+                    LOGGER.exception("driver cleanup failed")
+            try:
+                self._transport.close()
+            except Exception as error:
+                self.error = error
+                LOGGER.exception("transport cleanup failed")
 
 
 class DatabaseWriter(threading.Thread):
     def __init__(
         self,
         config: AppConfig,
-        results: queue.Queue[Sample | None],
+        results: SampleQueue,
         stored: Mapping[str, StoredSensor],
         stats: RuntimeStats,
         stop_event: threading.Event,
@@ -240,7 +297,8 @@ class DatabaseWriter(threading.Thread):
                         batch.append(sample)
                         self._results.task_done()
                     except queue.Empty:
-                        pass
+                        if self._results.drained():
+                            break
                     now = time.monotonic()
                     should_flush = len(batch) >= self._config.collector.batch_size or (
                         bool(batch) and now >= deadline

@@ -52,6 +52,23 @@ sensorctl disable
 
 Configuration changes take effect after validation and restart.
 
+On shutdown, collection stops scheduling reads, waits for bus workers, closes
+sample admission, and drains the database writer before recording final status.
+The configured shutdown timeout covers worker and writer waits together.
+If a thread is still running at the deadline, or a worker fails, collection
+exits with an error instead of reporting a successful shutdown. In-flight
+hardware operations cannot be forcibly interrupted; samples arriving after
+admission closes are discarded.
+
+The status JSON includes accepted and committed sample counts. Its `shutdown`
+object records completion, remaining threads, errors, pending sensor tasks,
+and samples not yet confirmed committed at shutdown assessment. That count
+includes the writer's batch, not just the queue. After a timeout, an operation
+may still finish before process exit, so these fields describe the shutdown
+assessment rather than a definitive count of lost samples. If the status
+writer is still running, the final file is not rewritten concurrently; consult
+the service journal for the shutdown failure.
+
 ## BMP280 over I2C
 
 Connect the module to 3.3 V, ground, SDA, and SCL. Enable the Raspberry Pi I2C
