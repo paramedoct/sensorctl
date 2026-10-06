@@ -89,9 +89,7 @@ class Collector:
         for worker in workers:
             worker.start()
         intervals = {sensor.id: sensor.interval_ms for sensor in enabled}
-        deadlines = {
-            sensor.id: time.monotonic_ns() // 1_000_000 for sensor in enabled
-        }
+        deadlines = {sensor.id: time.monotonic_ns() // 1_000_000 for sensor in enabled}
         try:
             while not self._stop_event.is_set():
                 now = time.monotonic_ns() // 1_000_000
@@ -142,8 +140,14 @@ class Collector:
                 except queue.Full:
                     LOGGER.error("result queue did not drain before shutdown deadline")
             writer.join(_remaining(shutdown_deadline))
-            status_writer.write()
             status_writer.join(_remaining(shutdown_deadline))
+            if status_writer.is_alive():
+                raise RuntimeError(
+                    "status writer did not stop before shutdown deadline"
+                )
+            if status_writer.error is not None:
+                raise RuntimeError("status writer failed") from status_writer.error
+            status_writer.write()
         if writer.error is not None:
             raise RuntimeError("database writer failed") from writer.error
 

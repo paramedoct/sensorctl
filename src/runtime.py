@@ -280,14 +280,19 @@ class StatusWriter(threading.Thread):
         self._capacity = capacity
         self._interval = interval_ms / 1000
         self._stop_event = stop_event
+        self.error: Exception | None = None
 
     def run(self) -> None:
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        while not self._stop_event.wait(self._interval):
-            self.write()
-        self.write()
+        try:
+            while not self._stop_event.wait(self._interval):
+                self.write()
+        except Exception as error:
+            self.error = error
+            LOGGER.exception("status writer failed")
+            self._stop_event.set()
 
     def write(self) -> None:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
         payload = self._stats.snapshot(self._results.qsize(), self._capacity)
         temporary = self._path.with_suffix(".tmp")
         temporary.write_text(json.dumps(payload, sort_keys=True) + "\n")
