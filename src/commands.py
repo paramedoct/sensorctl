@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import control
-from application import Collector
+from collector import Collector
 from config import AppConfig, ConfigError, load_config
 from drivers.registry import DriverRegistry, PreparedDrivers
 

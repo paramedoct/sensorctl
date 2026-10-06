@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from application import Collector
+from collector import Collector
 from config import CollectorConfig
 from drivers.registry import DriverRegistry
 from model import Sample
@@ -72,7 +72,7 @@ class ShutdownTest(unittest.TestCase):
                     prepared.by_sensor_id["counter"], "read", side_effect=read
                 ),
                 patch.object(SampleQueue, "close", close),
-                self.assertLogs("application", level="ERROR"),
+                self.assertLogs("collector", level="ERROR"),
             ):
                 try:
                     with self.assertRaisesRegex(

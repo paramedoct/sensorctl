@@ -8,7 +8,7 @@ import time
 import unittest
 from pathlib import Path
 
-from application import Collector
+from collector import Collector
 from config import CollectorConfig
 from drivers.registry import DriverRegistry
 from tests.support import make_mock_config

@@ -27,7 +27,7 @@ sensorctl = "commands:main"
 [tool.setuptools]
 package-dir = { "" = "src" }
 packages = ["drivers", "storage", "transports"]
-py-modules = ["application", "commands", "config", "control", "model", "runtime"]
+py-modules = ["collector", "commands", "config", "control", "model", "runtime"]
 
 [tool.setuptools.package-data]
 storage = ["schema.sql"]
