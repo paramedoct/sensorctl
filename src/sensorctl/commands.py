@@ -12,7 +12,7 @@ from pathlib import Path
 import sensorctl.control as control
 from sensorctl.collector import Collector
 from sensorctl.config import AppConfig, ConfigError, load_config
-from sensorctl.drivers.registry import DriverRegistry, PreparedDrivers
+from sensorctl.hw.drivers.registry import DriverRegistry, PreparedDrivers
 
 DEFAULT_CONFIG = Path(
     os.environ.get("SENSORCTL_CONFIG", "/etc/sensorctl/sensorctl.toml")

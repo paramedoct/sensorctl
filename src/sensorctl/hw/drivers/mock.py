@@ -4,9 +4,9 @@ from collections.abc import Mapping
 from typing import cast
 
 from sensorctl.config import ConfigError, SensorConfig
-from sensorctl.drivers.base import SensorDriver
+from sensorctl.hw.drivers.base import SensorDriver
+from sensorctl.hw.transports.base import Transport
 from sensorctl.model import FieldDefinition
-from sensorctl.transports.base import Transport
 
 
 class MockDriver(SensorDriver):

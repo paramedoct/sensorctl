@@ -13,10 +13,10 @@ from datetime import datetime
 from pathlib import Path
 
 from sensorctl.config import AppConfig, SensorConfig
-from sensorctl.drivers.base import SensorDriver
+from sensorctl.hw.drivers.base import SensorDriver
+from sensorctl.hw.transports.base import Transport
 from sensorctl.model import Sample, StoredSensor
 from sensorctl.storage.database import Database
-from sensorctl.transports.base import Transport
 
 LOGGER = logging.getLogger(__name__)
 

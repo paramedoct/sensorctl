@@ -9,7 +9,8 @@ from pathlib import Path
 from types import FrameType
 
 from sensorctl.config import AppConfig
-from sensorctl.drivers.registry import PreparedDrivers
+from sensorctl.hw.drivers.registry import PreparedDrivers
+from sensorctl.hw.transports.factory import create_transport
 from sensorctl.runtime import (
     BusWorker,
     DatabaseWriter,
@@ -19,7 +20,6 @@ from sensorctl.runtime import (
     StatusWriter,
 )
 from sensorctl.storage.database import Database
-from sensorctl.transports.base import create_transport
 
 LOGGER = logging.getLogger(__name__)
 

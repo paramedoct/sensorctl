@@ -11,7 +11,7 @@ from types import TracebackType
 from typing import Self
 
 from sensorctl.config import AppConfig, BusConfig, SensorConfig
-from sensorctl.drivers.base import SensorDriver
+from sensorctl.hw.drivers.base import SensorDriver
 from sensorctl.model import Sample, StoredSensor
 
 

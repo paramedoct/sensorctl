@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 
 from sensorctl.config import AppConfig, ConfigError, SensorConfig, load_config
-from sensorctl.drivers.mock import MockDriver
-from sensorctl.drivers.registry import DriverRegistry
+from sensorctl.hw.drivers.mock import MockDriver
+from sensorctl.hw.drivers.registry import DriverRegistry
 
 VALID_CONFIG = """
 version = 1

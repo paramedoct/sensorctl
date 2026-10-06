@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sensorctl.config import BusConfig
-from sensorctl.transports.base import Transport
+from sensorctl.hw.transports.base import Transport
 
 
 class UARTTransport(Transport):

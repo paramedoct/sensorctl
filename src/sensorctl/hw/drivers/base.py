@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
 from sensorctl.config import SensorConfig
+from sensorctl.hw.transports.base import Transport
 from sensorctl.model import FieldDefinition
-from sensorctl.transports.base import Transport
 
 
 class SensorDriver(ABC):

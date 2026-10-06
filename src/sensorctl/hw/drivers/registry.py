@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from sensorctl.config import AppConfig, ConfigError, SensorConfig
-from sensorctl.drivers.base import SensorDriver
-from sensorctl.drivers.bmp280 import BMP280Driver
-from sensorctl.drivers.mock import MockDriver
+from sensorctl.hw.drivers.base import SensorDriver
+from sensorctl.hw.drivers.bmp280 import BMP280Driver
+from sensorctl.hw.drivers.mock import MockDriver
 
 DriverFactory = Callable[[SensorConfig], SensorDriver]
 

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from sensorctl.collector import Collector
 from sensorctl.config import CollectorConfig
-from sensorctl.drivers.registry import DriverRegistry
+from sensorctl.hw.drivers.registry import DriverRegistry
 from tests.support import make_mock_config
 
 

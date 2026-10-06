@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Protocol, runtime_checkable
 
 from sensorctl.config import BusConfig
-from sensorctl.transports.base import Transport
+from sensorctl.hw.transports.base import Transport
 
 
 @runtime_checkable

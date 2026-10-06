@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from sensorctl.collector import Collector
 from sensorctl.config import CollectorConfig
-from sensorctl.drivers.registry import DriverRegistry
+from sensorctl.hw.drivers.registry import DriverRegistry
 from sensorctl.model import Sample
 from sensorctl.runtime import SampleQueue, StatusWriter
 from tests.support import make_mock_config
