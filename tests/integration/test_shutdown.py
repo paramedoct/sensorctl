@@ -8,11 +8,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from collector import Collector
-from config import CollectorConfig
-from drivers.registry import DriverRegistry
-from model import Sample
-from runtime import SampleQueue, StatusWriter
+from sensorctl.collector import Collector
+from sensorctl.config import CollectorConfig
+from sensorctl.drivers.registry import DriverRegistry
+from sensorctl.model import Sample
+from sensorctl.runtime import SampleQueue, StatusWriter
 from tests.support import make_mock_config
 
 
@@ -72,7 +72,7 @@ class ShutdownTest(unittest.TestCase):
                     prepared.by_sensor_id["counter"], "read", side_effect=read
                 ),
                 patch.object(SampleQueue, "close", close),
-                self.assertLogs("collector", level="ERROR"),
+                self.assertLogs("sensorctl.collector", level="ERROR"),
             ):
                 try:
                     with self.assertRaisesRegex(
@@ -130,7 +130,7 @@ class ShutdownTest(unittest.TestCase):
                 patch.object(
                     prepared.by_sensor_id["counter"], "read", side_effect=read
                 ),
-                patch("runtime.Database.write_samples", side_effect=write),
+                patch("sensorctl.runtime.Database.write_samples", side_effect=write),
                 self.assertLogs(level="ERROR"),
             ):
                 try:

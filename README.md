@@ -94,10 +94,12 @@ sudo sensorctl start
 ## Development
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests
+python3 -m pip install -e ".[dev]"
+python3 -m unittest discover -s tests
 ruff check .
 ruff format --check .
 mypy --strict .
+python3 -m sensorctl --help
 make --dry-run
 make --dry-run clean
 ```

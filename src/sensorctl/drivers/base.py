@@ -3,9 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
-from config import SensorConfig
-from model import FieldDefinition
-from transports.base import Transport
+from sensorctl.config import SensorConfig
+from sensorctl.model import FieldDefinition
+from sensorctl.transports.base import Transport
 
 
 class SensorDriver(ABC):

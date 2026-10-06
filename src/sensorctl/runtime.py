@@ -12,11 +12,11 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 
-from config import AppConfig, SensorConfig
-from drivers.base import SensorDriver
-from model import Sample, StoredSensor
-from storage.database import Database
-from transports.base import Transport
+from sensorctl.config import AppConfig, SensorConfig
+from sensorctl.drivers.base import SensorDriver
+from sensorctl.model import Sample, StoredSensor
+from sensorctl.storage.database import Database
+from sensorctl.transports.base import Transport
 
 LOGGER = logging.getLogger(__name__)
 

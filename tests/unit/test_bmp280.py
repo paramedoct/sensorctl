@@ -4,9 +4,9 @@ import struct
 import unittest
 from unittest.mock import patch
 
-from config import ConfigError, SensorConfig
-from drivers.bmp280 import BMP280Driver
-from transports.base import Transport
+from sensorctl.config import ConfigError, SensorConfig
+from sensorctl.drivers.bmp280 import BMP280Driver
+from sensorctl.transports.base import Transport
 
 CALIBRATION = struct.pack(
     "<HhhHhhhhhhhh",
@@ -64,7 +64,7 @@ def make_sensor(**options: object) -> SensorConfig:
 
 
 class BMP280DriverTest(unittest.TestCase):
-    @patch("drivers.bmp280.time.sleep")
+    @patch("sensorctl.drivers.bmp280.time.sleep")
     def test_compensates_datasheet_sample(self, sleep: object) -> None:
         del sleep
         transport = FakeI2CTransport()

@@ -22,15 +22,17 @@ dev = [
 ]
 
 [project.scripts]
-sensorctl = "commands:main"
+sensorctl = "sensorctl.commands:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
-packages = ["drivers", "storage", "transports"]
-py-modules = ["collector", "commands", "config", "control", "model", "runtime"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sensorctl*"]
 
 [tool.setuptools.package-data]
-storage = ["schema.sql"]
+"sensorctl.storage" = ["schema.sql"]
 
 [tool.ruff]
 target-version = "py313"

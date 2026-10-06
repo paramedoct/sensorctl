@@ -4,10 +4,10 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-from config import AppConfig, ConfigError, SensorConfig
-from drivers.base import SensorDriver
-from drivers.bmp280 import BMP280Driver
-from drivers.mock import MockDriver
+from sensorctl.config import AppConfig, ConfigError, SensorConfig
+from sensorctl.drivers.base import SensorDriver
+from sensorctl.drivers.bmp280 import BMP280Driver
+from sensorctl.drivers.mock import MockDriver
 
 DriverFactory = Callable[[SensorConfig], SensorDriver]
 

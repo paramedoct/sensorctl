@@ -6,11 +6,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Final, cast
 
-from config import ConfigError, SensorConfig
-from drivers.base import SensorDriver
-from model import FieldDefinition
-from transports.base import Transport
-from transports.i2c import I2CDevice
+from sensorctl.config import ConfigError, SensorConfig
+from sensorctl.drivers.base import SensorDriver
+from sensorctl.model import FieldDefinition
+from sensorctl.transports.base import Transport
+from sensorctl.transports.i2c import I2CDevice
 
 _CHIP_ID_REGISTER: Final = 0xD0
 _EXPECTED_CHIP_ID: Final = 0x58

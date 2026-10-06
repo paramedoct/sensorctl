@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 from typing import Any, cast
 
-from model import Sample
-from runtime import RuntimeStats, SampleQueue
+from sensorctl.model import Sample
+from sensorctl.runtime import RuntimeStats, SampleQueue
 
 
 class RuntimeStatsTest(unittest.TestCase):

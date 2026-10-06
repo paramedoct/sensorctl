@@ -4,9 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from config import AppConfig, ConfigError, SensorConfig, load_config
-from drivers.mock import MockDriver
-from drivers.registry import DriverRegistry
+from sensorctl.config import AppConfig, ConfigError, SensorConfig, load_config
+from sensorctl.drivers.mock import MockDriver
+from sensorctl.drivers.registry import DriverRegistry
 
 VALID_CONFIG = """
 version = 1

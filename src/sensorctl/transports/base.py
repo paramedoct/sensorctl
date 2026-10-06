@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from config import BusConfig
+from sensorctl.config import BusConfig
 
 
 class Transport(ABC):
@@ -27,13 +27,13 @@ def create_transport(config: BusConfig) -> Transport:
     if config.type == "mock":
         return MockTransport()
     if config.type == "i2c":
-        from transports.i2c import I2CTransport
+        from sensorctl.transports.i2c import I2CTransport
 
         return I2CTransport(config)
     if config.type == "spi":
-        from transports.spi import SPITransport
+        from sensorctl.transports.spi import SPITransport
 
         return SPITransport(config)
-    from transports.uart import UARTTransport
+    from sensorctl.transports.uart import UARTTransport
 
     return UARTTransport(config)

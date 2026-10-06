@@ -10,9 +10,9 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
-from config import AppConfig, BusConfig, SensorConfig
-from drivers.base import SensorDriver
-from model import Sample, StoredSensor
+from sensorctl.config import AppConfig, BusConfig, SensorConfig
+from sensorctl.drivers.base import SensorDriver
+from sensorctl.model import Sample, StoredSensor
 
 
 class Database:
@@ -179,7 +179,7 @@ def _prepare_schema(connection: sqlite3.Connection) -> None:
             _migrate_v1(connection)
         elif version != (2,):
             raise RuntimeError("unsupported database schema version")
-    schema = files("storage").joinpath("schema.sql").read_text()
+    schema = files("sensorctl.storage").joinpath("schema.sql").read_text()
     connection.executescript(schema)
 
 

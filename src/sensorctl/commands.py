@@ -9,10 +9,10 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-import control
-from collector import Collector
-from config import AppConfig, ConfigError, load_config
-from drivers.registry import DriverRegistry, PreparedDrivers
+import sensorctl.control as control
+from sensorctl.collector import Collector
+from sensorctl.config import AppConfig, ConfigError, load_config
+from sensorctl.drivers.registry import DriverRegistry, PreparedDrivers
 
 DEFAULT_CONFIG = Path(
     os.environ.get("SENSORCTL_CONFIG", "/etc/sensorctl/sensorctl.toml")

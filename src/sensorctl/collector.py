@@ -8,9 +8,9 @@ import time
 from pathlib import Path
 from types import FrameType
 
-from config import AppConfig
-from drivers.registry import PreparedDrivers
-from runtime import (
+from sensorctl.config import AppConfig
+from sensorctl.drivers.registry import PreparedDrivers
+from sensorctl.runtime import (
     BusWorker,
     DatabaseWriter,
     ReadTask,
@@ -18,8 +18,8 @@ from runtime import (
     SampleQueue,
     StatusWriter,
 )
-from storage.database import Database
-from transports.base import create_transport
+from sensorctl.storage.database import Database
+from sensorctl.transports.base import create_transport
 
 LOGGER = logging.getLogger(__name__)
 

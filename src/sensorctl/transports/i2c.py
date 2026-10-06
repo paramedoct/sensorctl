@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from config import BusConfig
-from transports.base import Transport
+from sensorctl.config import BusConfig
+from sensorctl.transports.base import Transport
 
 
 @runtime_checkable
