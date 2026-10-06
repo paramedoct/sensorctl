@@ -5,11 +5,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sensorctl.config import BusConfig, SensorConfig
-from sensorctl.hw.drivers.registry import DriverRegistry
-from sensorctl.model import Sample
-from sensorctl.storage.database import Database
-from sensorctl.storage.repositories.sensors import _fingerprint
+from config import BusConfig, SensorConfig
+from hw.drivers.registry import DriverRegistry
+from model import Sample
+from storage.database import Database
+from storage.repositories.sensors import _fingerprint
 from tests.support import make_mock_config
 
 

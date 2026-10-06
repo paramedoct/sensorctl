@@ -4,15 +4,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sensorctl.config import AppConfig, ConfigError, SensorConfig, load_config
-from sensorctl.hw.drivers.mock import MockDriver
-from sensorctl.hw.drivers.registry import DriverRegistry
+from config import AppConfig, ConfigError, SensorConfig, load_config
+from hw.drivers.mock import MockDriver
+from hw.drivers.registry import DriverRegistry
 
 VALID_CONFIG = """
 version = 1
 
 [database]
-path = "/tmp/sensorctl.db"
+path = "/tmp/db"
 
 [buses.mock_main]
 type = "mock"
@@ -46,10 +46,8 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.buses["mock_main"].retries, 0)
 
     def test_uses_sensorctl_default_database_path(self) -> None:
-        config = self.load(
-            VALID_CONFIG.replace('[database]\npath = "/tmp/sensorctl.db"\n\n', "")
-        )
-        self.assertEqual(config.database.path, Path("/var/lib/sensorctl/sensorctl.db"))
+        config = self.load(VALID_CONFIG.replace('[database]\npath = "/tmp/db"\n\n', ""))
+        self.assertEqual(config.database.path, Path("/var/lib/sensorctl/db"))
 
     def test_loads_bmp280_example(self) -> None:
         path = Path(__file__).parents[2] / "config" / "bmp280.example.toml"

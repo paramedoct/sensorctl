@@ -54,13 +54,14 @@ Configuration changes take effect after validation and restart. Database schema 
 
 ## Source layout
 
-Application code lives in the `src/sensorctl` package. Commands and collection
-lifecycle are at the package root; hardware drivers and transports live under
-`hw`, execution threads and queues under `runtime`, and database connections,
-repositories, schema metadata, and Alembic revisions under `storage`.
+Importable modules and packages live directly under `src/`. Commands,
+configuration, collection lifecycle, and shared models are top-level modules.
+Hardware drivers and transports live under `hw`, execution threads and queues
+under `runtime`, and database connections, repositories, schema metadata, and
+Alembic revisions under `storage`.
 
 New database changes belong in a new file under
-`src/sensorctl/storage/migrations/versions`. Treat published revisions as
+`src/storage/migrations/versions`. Treat published revisions as
 immutable. Add a revision after the current head, then verify it against a new
 database and the supported legacy database fixtures before release. The
 timestamp conversion cannot be downgraded safely.
@@ -113,7 +114,7 @@ python3 -m unittest discover -s tests
 ruff check .
 ruff format --check .
 mypy --strict .
-.venv/bin/python -m sensorctl --help
+.venv/bin/sensorctl --help
 make --dry-run
 make --dry-run clean
 ```

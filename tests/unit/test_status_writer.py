@@ -7,8 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from sensorctl.model import Sample
-from sensorctl.runtime import RuntimeStats, StatusWriter
+from model import Sample
+from runtime import RuntimeStats, StatusWriter
 
 
 class StatusWriterTest(unittest.TestCase):
@@ -56,7 +56,7 @@ class StatusWriterTest(unittest.TestCase):
         error = OSError("status unavailable")
         with (
             patch.object(writer, "write", side_effect=error),
-            self.assertLogs("sensorctl.runtime", level="ERROR"),
+            self.assertLogs("runtime", level="ERROR"),
         ):
             writer.start()
             writer.join(2)

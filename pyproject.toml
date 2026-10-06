@@ -24,17 +24,18 @@ dev = [
 ]
 
 [project.scripts]
-sensorctl = "sensorctl.commands:main"
+sensorctl = "commands:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
+py-modules = ["collector", "commands", "config", "model", "service"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["sensorctl*"]
+include = ["hw*", "runtime*", "storage*"]
 
 [tool.setuptools.package-data]
-"sensorctl.storage.migrations" = ["script.py.mako"]
+"storage.migrations" = ["script.py.mako"]
 
 [tool.ruff]
 target-version = "py313"

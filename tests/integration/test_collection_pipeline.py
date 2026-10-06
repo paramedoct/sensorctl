@@ -8,9 +8,9 @@ import time
 import unittest
 from pathlib import Path
 
-from sensorctl.collector import Collector
-from sensorctl.config import CollectorConfig
-from sensorctl.hw.drivers.registry import DriverRegistry
+from collector import Collector
+from config import CollectorConfig
+from hw.drivers.registry import DriverRegistry
 from tests.support import make_mock_config
 
 
